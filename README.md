@@ -23,6 +23,74 @@
   메우기에 가장 직접적일 것 같음 (1순위)
 ---
 
+## 구조
+
+아직 실제 도메인 로직은 없는 최소 스켈레톤 단계. 프론트 → 백엔드 → 에이전트
+→ LLM까지 요청이 왕복하는 흐름만 연결되어 있다.
+
+```
+backend/
+├── app/main.py       # FastAPI. /health, /chat(POST)
+├── agent/loop.py      # 에이전트 루프 (tool_calls 반복 호출)
+├── llm/client.py      # LiteLLM 래퍼 (litellm.completion만 사용)
+├── tools/schemas.py   # 도구 스키마 + 디스패치 테이블 (더미 echo 도구)
+├── rag/retriever.py    # retrieve(query) 인터페이스만 (스텁)
+├── pyproject.toml
+├── Dockerfile
+└── .env.example        # GEMINI_API_KEY, MODEL
+
+frontend/               # React + Vite (TypeScript)
+├── src/App.tsx          # 최소 채팅 UI, /chat 호출
+├── vite.config.ts       # dev proxy: /chat, /health → backend
+├── nginx.conf           # prod: /api/* → backend 리버스 프록시
+└── Dockerfile           # 멀티스테이지 (node build → nginx serve)
+
+compose.yml              # 프로덕션: backend + frontend(nginx) 컨테이너
+compose.dev.yml          # 개발: 볼륨마운트 + 백엔드 --reload / 프론트 HMR
+```
+
+## 실행 방법
+
+### 1) Docker Compose (기본/프로덕션)
+
+```bash
+cp backend/.env.example backend/.env   # GEMINI_API_KEY 값 채우기
+docker compose up --build
+```
+
+프론트 컨테이너 주소(`http://localhost`)로 접속. nginx가 정적 파일을 서빙하고
+`/api/*` 요청을 backend 컨테이너로 프록시한다.
+
+### 2) Docker Compose (개발 모드, HMR)
+
+```bash
+cp backend/.env.example backend/.env
+docker compose -f compose.dev.yml up --build
+```
+
+- 프론트: `http://localhost:5173` — 소스 볼륨마운트 + Vite dev 서버(HMR)
+- 백엔드: `http://localhost:8000` — 소스 볼륨마운트 + `uvicorn --reload`
+
+### 3) 로컬에서 직접 실행 (Docker 없이)
+
+백엔드:
+
+```bash
+cd backend
+cp .env.example .env
+uv sync   # 또는: pip install fastapi "uvicorn[standard]" litellm python-dotenv
+uv run uvicorn app.main:app --reload
+```
+
+프론트:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+
 
 ## 💡 프로젝트 아이디어 메모 (계속 업데이트)
 
