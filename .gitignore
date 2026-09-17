@@ -12,5 +12,11 @@ dist/
 .env
 backend/.env
 
+# SQLite data
+backend/*.db
+
 # OS
 .DS_Store
+
+# CLAUDE
+CLAUDE.md

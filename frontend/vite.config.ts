@@ -19,6 +19,10 @@ export default defineConfig({
         target: backendTarget,
         changeOrigin: true,
       },
+      '/concepts': {
+        target: backendTarget,
+        changeOrigin: true,
+      },
     },
   },
 })
