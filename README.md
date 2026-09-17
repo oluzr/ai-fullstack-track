@@ -1,53 +1,85 @@
-# AI Service Engineering 
+# 개념 사전 학습 앱
 
-## 🎯 학습 목표 (1주차 작성)
+모르는/공부 중인 개념을 "내 사전"에 등록하고, LLM과의 반복 학습(퀴즈)을 통해
+이해도 게이지를 채워가는 학습 앱. AI Service Engineering 트랙 실습
+프로젝트로, 프론트 → 백엔드 → 에이전트/LLM → DB까지 한 서비스의 전 구간을
+직접 설계하고 조립하는 것이 목표.
 
-단순히 "AI API를 붙인 화면"을 만드는 게 아니라, **에이전트 루프 → LiteLLM →
-벡터DB/RAG → FastAPI → Docker 배포**까지 이어지는 한 서비스의 전 구간을 직접
-설계하고 조립한 결과물. 화면 뒤에서 실제로 무슨 일이 일어나는지를 채워 넣는 것이 목표
+## 컨셉
 
-구체적으로 이번 14주 동안 아래 개념들을 "안다"가 아니라 "손으로 만져봤다"로
-만드는 것이 개인적인 최우선 목표:
+- **등록**: 개념을 등록하면 LLM이 먼저 그 단어의 의미를 해석해서 보여준다.
+  동음이의어일 가능성이 있으면 의미 후보 중 하나를 고르게 하고, 그렇지
+  않으면 추론한 의미를 확인시켜준다 — 사용자가 알던 의미와 다르면
+  "다시 추론"으로 다른 관점의 의미를 재요청할 수 있다. 이렇게 확정된 의미가
+  이후 모든 퀴즈/채점/메모 판단의 기준이 된다.
+- **학습**: 확정된 의미를 기준으로 객관식/서술형 퀴즈를 반복 풀며 이해도
+  게이지(0~100%)를 채운다. 객관식은 정오답을 결정적으로 채점하고, 서술형은
+  LLM이 채점자(judge) 역할로 점수+피드백을 준다. 100%에 도달하면 "마스터"
+  처리 여부를 확인 후 사전에서 제외한다 (하드 삭제 아님 — 이력은 보존).
+- **메모**: 개념마다 자유 메모를 남길 수 있고, 메모 본문에 다른 등록된
+  개념이 언급되면 LLM이 자동으로 감지해 양방향 백링크로 연결한다.
 
-- **서버/API**: FastAPI로 엔드포인트를 설계하고, 요청-응답 흐름·에러 처리·입력
-  검증이 왜 필요한지 체감하기
-- **Vector DB / RAG**: 임베딩이 뭔지, 청킹은 왜 하는지, retrieval이 검색과 뭐가
-  다른지 — Chroma를 직접 채우고 질의해보며 이해하기
-- **에이전트 루프 / 하네스**: 모델이 도구 호출을 "결정"한다는 게 실제 코드에서
-  어떻게 구현되는지, 무한루프 방지·가드레일이 왜 붙는지
-- **인프라**: Docker로 컨테이너를 띄우고, 로컬 환경과 배포 환경의 차이를
-  이해하기 — "GPU 없이도 되는 이유"까지 설명할 수 있는 수준으로
+## 기술 스택 / 아키텍처
 
-### 관심 트랙 후보
-- **문서 기반 RAG** — 벡터DB·retrieval을 가장 깊게 다루는 트랙이라 백엔드 갭을
-  메우기에 가장 직접적일 것 같음 (1순위)
----
-
-## 구조
-
-아직 실제 도메인 로직은 없는 최소 스켈레톤 단계. 프론트 → 백엔드 → 에이전트
-→ LLM까지 요청이 왕복하는 흐름만 연결되어 있다.
+- **Backend**: FastAPI + SQLAlchemy(SQLite 기본, ORM 한 겹 둬서 나중에
+  Postgres 등으로 교체 가능) + LiteLLM
+- **LLM**: 프로바이더 SDK 직접 호출 없이 전부 LiteLLM 경유
+  (`MODEL` 환경변수로 모델 교체, 구조화 출력이 필요한 호출은 JSON 모드로 강제)
+- **Frontend**: React + Vite (TypeScript). 별도 라우터 없이 상태 기반으로
+  목록/상세 화면을 전환하는 단순 SPA
+- **배포**: Docker Compose — 개발(볼륨마운트 + HMR/reload) / 프로덕션
+  (빌드 + nginx) 두 모드를 분리
 
 ```
 backend/
-├── app/main.py       # FastAPI. /health, /chat(POST)
-├── agent/loop.py      # 에이전트 루프 (tool_calls 반복 호출)
-├── llm/client.py      # LiteLLM 래퍼 (litellm.completion만 사용)
-├── tools/schemas.py   # 도구 스키마 + 디스패치 테이블 (더미 echo 도구)
-├── rag/retriever.py    # retrieve(query) 인터페이스만 (스텁)
-├── pyproject.toml
-├── Dockerfile
-└── .env.example        # GEMINI_API_KEY, MODEL
+├── app/
+│   ├── main.py           # FastAPI 앱, 라우터 등록, /health
+│   ├── schemas.py        # 요청/응답 Pydantic 모델
+│   └── routers/
+│       ├── concepts.py   # 등록/의미해석/목록/퀴즈/마스터
+│       └── notes.py      # 메모 작성/조회
+├── agent/loop.py         # 에이전트 루프 (tool_calls 반복 호출) — /chat 데모용
+├── llm/client.py         # LiteLLM 래퍼 (일반 completion + JSON 강제 completion)
+├── tools/
+│   ├── meanings.py       # 등록 전 의미 해석 (동음이의어 판별)
+│   ├── quiz.py           # 퀴즈 생성 + 서술형 채점
+│   ├── gauge.py          # 이해도 게이지 갱신 규칙
+│   ├── notes.py          # 메모 언급 개념 추출 → 백링크 기록
+│   └── schemas.py        # 더미 echo 도구 (agent loop 배선 검증용)
+├── db/
+│   ├── base.py           # SQLAlchemy 엔진/세션 (DATABASE_URL로 교체 가능)
+│   └── models.py         # Concept, QuizAttempt, Note, NoteLink
+├── rag/retriever.py       # RAG 인터페이스 자리만 마련 (미구현 스텁)
+├── pyproject.toml / Dockerfile / .env.example
 
-frontend/               # React + Vite (TypeScript)
-├── src/App.tsx          # 최소 채팅 UI, /chat 호출
-├── vite.config.ts       # dev proxy: /chat, /health → backend
-├── nginx.conf           # prod: /api/* → backend 리버스 프록시
-└── Dockerfile           # 멀티스테이지 (node build → nginx serve)
+frontend/
+├── src/
+│   ├── api.ts               # 백엔드 호출 래퍼 + 타입 정의
+│   ├── App.tsx               # 목록 ↔ 상세 화면 전환
+│   └── components/
+│       ├── ConceptList.tsx    # 사전 목록 + 등록 폼
+│       ├── MeaningModal.tsx   # 등록 시 의미 확인/선택 모달
+│       ├── ConceptDetail.tsx  # 퀴즈 + 게이지 + 마스터 확인 모달
+│       ├── NotesPanel.tsx     # 메모 작성 + 백링크 표시
+│       └── GaugeBar.tsx
+├── vite.config.ts / nginx.conf / Dockerfile / package.json
 
-compose.yml              # 프로덕션: backend + frontend(nginx) 컨테이너
-compose.dev.yml          # 개발: 볼륨마운트 + 백엔드 --reload / 프론트 HMR
+compose.yml       # 프로덕션: backend + frontend(nginx) 컨테이너
+compose.dev.yml   # 개발: 볼륨마운트 + 백엔드 --reload / 프론트 HMR
 ```
+
+## API
+
+| Method | Path | 설명 | LLM 호출 |
+|---|---|---|:---:|
+| POST | `/concepts/interpret` | 등록 전 의미 해석 (동음이의어 판별) | O |
+| POST | `/concepts` | 개념 등록 `{term, definition}` | X |
+| GET | `/concepts` | 사전 목록 (`status=active` 기본) | X |
+| POST | `/concepts/{id}/quiz` | 퀴즈 생성 `{type: mc\|free}` | mc만 O |
+| POST | `/concepts/{id}/quiz/answer` | 채점 + 게이지 갱신 | free만 O |
+| POST | `/concepts/{id}/master` | 마스터 처리 (소프트 삭제) | X |
+| POST | `/concepts/{id}/notes` | 메모 작성 → 언급 개념 자동 추출 | O |
+| GET | `/concepts/{id}/notes` | 메모 조회 (내 메모 + 백링크 메모) | X |
 
 ## 실행 방법
 
@@ -70,6 +102,8 @@ docker compose -f compose.dev.yml up --build
 
 - 프론트: `http://localhost:5173` — 소스 볼륨마운트 + Vite dev 서버(HMR)
 - 백엔드: `http://localhost:8000` — 소스 볼륨마운트 + `uvicorn --reload`
+- SQLite DB(`backend/app.db`)는 볼륨마운트된 경로에 자동 생성되며, 컨테이너를
+  껐다 켜도 데이터가 유지된다.
 
 ### 3) 로컬에서 직접 실행 (Docker 없이)
 
@@ -78,7 +112,7 @@ docker compose -f compose.dev.yml up --build
 ```bash
 cd backend
 cp .env.example .env
-uv sync   # 또는: pip install fastapi "uvicorn[standard]" litellm python-dotenv
+uv sync   # 또는: pip install fastapi "uvicorn[standard]" litellm python-dotenv sqlalchemy
 uv run uvicorn app.main:app --reload
 ```
 
@@ -90,10 +124,30 @@ npm install
 npm run dev
 ```
 
+## 기술 원칙
 
+- 모든 LLM 호출은 LiteLLM 경유 — 프로바이더 SDK 직접 호출 금지
+- 모델 문자열은 `MODEL` 환경변수로 분리 — 값만 바꾸면 다른 프로바이더/모델로 교체 가능
+- 모듈 분리 유지: `llm/`, `tools/`, `agent/`, `rag/`, `db/` — 단일 파일에 몰아넣지 않기
+- 퀴즈 생성/채점/멘션추출 등 판단이 필요한 LLM 호출은 항상 구조화 출력(JSON)으로 강제
+- 마스터 처리는 소프트 삭제(status 변경)만 — 학습 이력·데이터는 삭제하지 않음
+- DB는 SQLAlchemy ORM 한 겹을 둬서, SQLite → Postgres 등으로 교체할 때
+  모델/쿼리 코드를 건드리지 않아도 되게 유지
+- `.env.example`에는 키 이름만, 실제 값은 `.env`(gitignore)에만
 
-## 💡 프로젝트 아이디어 메모 (계속 업데이트)
+## 학습 목표
 
-7주차 트랙 가결정, 10주차 기획 확정 전까지 자유롭게 떠오르는 아이디어를 누적.
-프론트엔드 강점을 살리면서 백엔드 갭을 메우는 방향의 아이디어 위주로 기록.
+단순히 "AI API를 붙인 화면"이 아니라 **에이전트 루프 → LiteLLM → 구조화 출력
+→ FastAPI/ORM → Docker 배포**까지 이어지는 전 구간을 직접 조립해보는 것이
+이 트랙의 목표. 이번 프로젝트로 실제로 손으로 만져본 것들:
 
+- **서버/API**: 요청-응답 흐름, 입력 검증(Pydantic), 상태 코드/에러 처리
+- **에이전트 도구 호출**: 모델이 구조화된 판단(의미 해석/채점/멘션추출)을
+  내리게 하고, 그 결과를 애플리케이션 로직(게이지 갱신, 백링크 기록)에
+  연결하는 패턴
+- **LLM 비용/토큰 감각**: 무료 티어 요청 한도, reasoning(thinking) 토큰이
+  실제 비용에 미치는 영향, `reasoning_effort` 같은 파라미터로 조절하는 법
+- **인프라**: Docker Compose로 다중 컨테이너 구성, 개발/프로덕션 모드 분리
+
+RAG/벡터DB(`rag/retriever.py`)는 아직 인터페이스만 마련된 스텁 상태 — 다음
+단계 후보.
