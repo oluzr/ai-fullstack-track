@@ -1,5 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
+import { useEffect, useRef, useState } from 'react'
+import styled from 'styled-components'
 import { api } from '../api'
+import { Button, Choices, ChoiceLabel, Modal, ModalActions, ModalOverlay, Muted } from '../styles/shared'
+
+const SingleMeaning = styled.p`
+  background: ${(p) => p.theme.colors.highlight};
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin: 0.75rem 0;
+`
 
 export default function MeaningModal({
   term,
@@ -10,43 +20,42 @@ export default function MeaningModal({
   onCancel: () => void
   onConfirm: (definition: string) => void
 }) {
-  const [loading, setLoading] = useState(true)
-  const [isAmbiguous, setIsAmbiguous] = useState(false)
-  const [meanings, setMeanings] = useState<string[]>([])
   const [seenMeanings, setSeenMeanings] = useState<string[]>([])
   const [selected, setSelected] = useState('')
+  const hasFetchedRef = useRef(false)
 
-  const fetchMeanings = async (exclude: string[]) => {
-    setLoading(true)
-    try {
-      const res = await api.interpretTerm(term, exclude)
-      setIsAmbiguous(res.is_ambiguous)
-      setMeanings(res.meanings)
+  const interpret = useMutation({
+    mutationFn: (exclude: string[]) => api.interpretTerm(term, exclude),
+    onSuccess: (res) => {
       setSelected(res.meanings[0] ?? '')
       setSeenMeanings((prev) => [...prev, ...res.meanings])
-    } finally {
-      setLoading(false)
-    }
-  }
+    },
+  })
 
   useEffect(() => {
-    fetchMeanings([])
+    if (hasFetchedRef.current) return
+    hasFetchedRef.current = true
+    interpret.mutate([])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [term])
 
+  const loading = interpret.isPending
+  const isAmbiguous = interpret.data?.is_ambiguous ?? false
+  const meanings = interpret.data?.meanings ?? []
+
   return (
-    <div className="modal-overlay">
-      <div className="modal meaning-modal">
+    <ModalOverlay>
+      <Modal $wide>
         <h3>&quot;{term}&quot; 의미 확인</h3>
 
-        {loading && <p className="muted">의미를 확인하는 중...</p>}
+        {loading && <Muted>의미를 확인하는 중...</Muted>}
 
         {!loading && isAmbiguous && (
           <>
-            <p className="muted">여러 의미로 쓰일 수 있는 단어예요. 등록할 의미를 골라주세요.</p>
-            <div className="choices">
+            <Muted>여러 의미로 쓰일 수 있는 단어예요. 등록할 의미를 골라주세요.</Muted>
+            <Choices>
               {meanings.map((m, i) => (
-                <label key={i} className="choice">
+                <ChoiceLabel key={i}>
                   <input
                     type="radio"
                     name="meaning"
@@ -56,32 +65,30 @@ export default function MeaningModal({
                   <span>
                     <strong>{i + 1}번 의미.</strong> {m}
                   </span>
-                </label>
+                </ChoiceLabel>
               ))}
-            </div>
+            </Choices>
           </>
         )}
 
-        {!loading && !isAmbiguous && meanings[0] && (
-          <p className="single-meaning">{meanings[0]}</p>
-        )}
+        {!loading && !isAmbiguous && meanings[0] && <SingleMeaning>{meanings[0]}</SingleMeaning>}
 
         {!loading && (
-          <div className="modal-actions">
+          <ModalActions>
             {!isAmbiguous && (
-              <button className="secondary" onClick={() => fetchMeanings(seenMeanings)}>
+              <Button $secondary onClick={() => interpret.mutate(seenMeanings)}>
                 다른 의미로 다시 추론
-              </button>
+              </Button>
             )}
-            <button onClick={() => onConfirm(selected)} disabled={!selected}>
+            <Button onClick={() => onConfirm(selected)} disabled={!selected}>
               이 의미로 등록
-            </button>
-            <button className="secondary" onClick={onCancel}>
+            </Button>
+            <Button $secondary onClick={onCancel}>
               취소
-            </button>
-          </div>
+            </Button>
+          </ModalActions>
         )}
-      </div>
-    </div>
+      </Modal>
+    </ModalOverlay>
   )
 }

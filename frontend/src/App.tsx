@@ -1,13 +1,20 @@
 import { useState } from 'react'
+import styled from 'styled-components'
 import type { Concept } from './api'
 import ConceptDetail from './components/ConceptDetail'
 import ConceptList from './components/ConceptList'
+
+const AppWrapper = styled.div`
+  max-width: 720px;
+  margin: 2rem auto;
+  padding: 0 1rem 3rem;
+`
 
 function App() {
   const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null)
 
   return (
-    <div className="app">
+    <AppWrapper>
       {selectedConcept ? (
         <ConceptDetail
           concept={selectedConcept}
@@ -17,7 +24,7 @@ function App() {
       ) : (
         <ConceptList onSelect={setSelectedConcept} />
       )}
-    </div>
+    </AppWrapper>
   )
 }
 
