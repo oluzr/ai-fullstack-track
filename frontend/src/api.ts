@@ -46,6 +46,10 @@ export type QuizAnswerResult = {
   mastery_ready: boolean
 }
 
+export type ExplainResult = {
+  explanation: string
+}
+
 export type Note = {
   id: number
   concept_id: number
@@ -84,6 +88,11 @@ export const api = {
 
   masterConcept: (conceptId: number) =>
     request<Concept>(`/concepts/${conceptId}/master`, { method: 'POST' }),
+
+  explainConcept: (conceptId: number) =>
+    request<ExplainResult>(`/concepts/${conceptId}/explain`, { method: 'POST' }),
+
+  listAllNotes: () => request<Note[]>('/notes'),
 
   listNotes: (conceptId: number) => request<Note[]>(`/concepts/${conceptId}/notes`),
 

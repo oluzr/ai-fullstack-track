@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import styled from 'styled-components'
 import { api } from '../api'
+import { flashAiPhase } from '../store/useAiActivityStore'
 import {
   Button,
   Choices,
@@ -15,67 +15,18 @@ import {
   Textarea,
 } from '../styles/shared'
 
-const ModalHeader = styled.div`
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-`
+import {
+  ModalHeader,
+  ModalTitleGroup,
+  ModalTitle,
+  ModalSubtitle,
+  CloseButton,
+  Field,
+  FieldLabel,
+  CategoryRow,
 
-const ModalTitleGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-`
-
-const ModalTitle = styled.div`
-  font-size: 23px;
-  font-weight: 800;
-  color: ${(p) => p.theme.color.ink};
-  letter-spacing: -0.02em;
-`
-
-const ModalSubtitle = styled.div`
-  font-size: 13.5px;
-  color: ${(p) => p.theme.color.ink3};
-`
-
-const CloseButton = styled.button`
-  border: none;
-  background: none;
-  font-size: 18px;
-  color: ${(p) => p.theme.color.ink4};
-  cursor: pointer;
-  line-height: 1;
-`
-
-const Field = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-`
-
-const FieldLabel = styled.div`
-  font-family: ${(p) => p.theme.font.mono};
-  font-size: 11px;
-  color: ${(p) => p.theme.color.ink3};
-  letter-spacing: 0.06em;
-`
-
-const CategoryRow = styled.div`
-  display: flex;
-  gap: 8px;
-`
-
-const SingleMeaning = styled.div`
-  background: ${(p) => p.theme.surface.solid};
-  border: 1px solid ${(p) => p.theme.border.fieldbd};
-  border-radius: ${(p) => p.theme.radius.sm};
-  padding: 16px 18px;
-  font-size: 14.5px;
-  line-height: 1.75;
-  color: ${(p) => p.theme.color.ink2};
-`
+  SingleMeaning,
+} from './NewConceptModal.styles'
 
 type Step = 1 | 2
 
@@ -90,10 +41,13 @@ export default function NewConceptModal({ onClose }: { onClose: () => void }) {
 
   const interpret = useMutation({
     mutationFn: (exclude: string[]) => api.interpretTerm(term, exclude),
+    onMutate: () => flashAiPhase('thinking'),
     onSuccess: (res) => {
+      flashAiPhase('done')
       setSelected(res.meanings[0] ?? '')
       setSeenMeanings((prev) => [...prev, ...res.meanings])
     },
+    onError: () => flashAiPhase('error'),
   })
 
   const createConcept = useMutation({
@@ -177,7 +131,7 @@ export default function NewConceptModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <ModalOverlay>
+    <ModalOverlay onClick={(e) => e.target === e.currentTarget && onClose()}>
       <Modal $wide>
         <ModalHeader>
           <ModalTitleGroup>

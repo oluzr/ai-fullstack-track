@@ -1,56 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { FiPlus } from 'react-icons/fi'
-import styled from 'styled-components'
 import { api } from '../api'
-import { Button, GlassCard, Muted, Textarea } from '../styles/shared'
-
-const Section = styled.section`
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-`
-
-const SectionTitle = styled.h2`
-  font-size: 18px;
-  font-weight: 700;
-  color: ${(p) => p.theme.color.ink};
-`
-
-const NoteForm = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-`
-
-const NotesGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`
-
-const GroupLabel = styled.h3`
-  font-size: 13px;
-  font-weight: 600;
-  color: ${(p) => p.theme.color.ink3};
-`
-
-const NoteCard = styled(GlassCard)<{ $backlink?: boolean }>`
-  padding: 15px 18px;
-  border-left: ${(p) => (p.$backlink ? `3px solid ${p.theme.color.acc}` : undefined)};
-`
-
-const NoteSource = styled.p`
-  font-size: 12px;
-  color: ${(p) => p.theme.color.ink3};
-  margin: 0 0 0.25rem;
-`
-
-const NoteBody = styled.p`
-  font-size: 14px;
-  line-height: 1.7;
-  color: ${(p) => p.theme.color.ink2};
-`
+import { Button, Muted, Textarea } from '../styles/shared'
+import {
+  Section,
+  SectionTitle,
+  NoteForm,
+  NotesGroup,
+  GroupLabel,
+  NoteCard,
+  NoteSource,
+  NoteBody,
+} from './NotesPanel.styles'
 
 export default function NotesPanel({ conceptId }: { conceptId: number }) {
   const queryClient = useQueryClient()

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.schemas import (
     ConceptCreate,
     ConceptOut,
+    ExplainOut,
     InterpretOut,
     InterpretRequest,
     QuizAnswerOut,
@@ -13,6 +14,7 @@ from app.schemas import (
 )
 from db.base import get_db
 from db.models import Concept, QuizAttempt
+from tools import explain as explain_tools
 from tools import gauge as gauge_tools
 from tools import meanings as meaning_tools
 from tools import quiz as quiz_tools
@@ -42,6 +44,16 @@ def create_concept(payload: ConceptCreate, db: Session = Depends(get_db)):
 @router.get("/concepts", response_model=list[ConceptOut])
 def list_concepts(status: str = "active", db: Session = Depends(get_db)):
     return db.query(Concept).filter(Concept.status == status).all()
+
+
+@router.post("/concepts/{concept_id}/explain", response_model=ExplainOut)
+def explain_concept(concept_id: int, db: Session = Depends(get_db)):
+    concept = db.get(Concept, concept_id)
+    if not concept:
+        raise HTTPException(status_code=404, detail="concept not found")
+
+    result = explain_tools.explain_concept(concept.term, concept.definition)
+    return ExplainOut(**result)
 
 
 @router.post("/concepts/{concept_id}/quiz", response_model=QuizOut)

@@ -1,190 +1,28 @@
 import { useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
-import { GlassCard, glass } from '../styles/shared'
-
-const Page = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-`
-
-const TopBar = styled.div`
-  padding: 16px 28px;
-  border-bottom: 1px solid ${(p) => p.theme.border.bd1};
-  background: ${(p) => p.theme.surface.glass2};
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  ${glass(34)}
-`
-
-const TopBarTitle = styled.span`
-  font-family: ${(p) => p.theme.font.mono};
-  font-size: 12.5px;
-  color: ${(p) => p.theme.color.ink3};
-
-  strong {
-    color: ${(p) => p.theme.color.ink};
-    font-weight: 400;
-  }
-
-  em {
-    color: ${(p) => p.theme.color.acc};
-    font-style: normal;
-  }
-`
-
-const LangTabs = styled.div`
-  display: flex;
-  gap: 7px;
-  font-family: ${(p) => p.theme.font.mono};
-  font-size: 11.5px;
-`
-
-const LangTab = styled.span<{ $active?: boolean }>`
-  padding: 6px 12px;
-  border-radius: ${(p) => p.theme.radius.xs};
-  background: ${(p) => (p.$active ? p.theme.color.btn : p.theme.border.bd1)};
-  color: ${(p) => (p.$active ? '#fff' : p.theme.color.ink3)};
-`
-
-const Grid = styled.div`
-  flex: 1;
-  display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
-  gap: 20px;
-  padding: 24px;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-  }
-`
-
-const ProblemPanel = styled(GlassCard)`
-  padding: 26px;
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-`
-
-const ProblemTitle = styled.div`
-  font-size: 22px;
-  font-weight: 800;
-  color: ${(p) => p.theme.color.ink};
-  letter-spacing: -0.02em;
-`
-
-const ProblemBody = styled.div`
-  font-size: 14.5px;
-  line-height: 1.8;
-  color: ${(p) => p.theme.color.ink3};
-`
-
-const SubLabel = styled.div`
-  font-family: ${(p) => p.theme.font.mono};
-  font-size: 11px;
-  color: ${(p) => p.theme.color.ink3};
-  letter-spacing: 0.06em;
-  margin-bottom: 8px;
-`
-
-const Constraints = styled.div`
-  font-family: ${(p) => p.theme.font.mono};
-  font-size: 12.5px;
-  line-height: 1.95;
-  color: ${(p) => p.theme.color.ink3};
-`
-
-const ExampleTable = styled.div`
-  background: ${(p) => p.theme.surface.glass6};
-  border: 1px solid ${(p) => p.theme.border.bd2};
-  border-radius: ${(p) => p.theme.radius.sm};
-  overflow: hidden;
-  font-family: ${(p) => p.theme.font.mono};
-  font-size: 12px;
-`
-
-const ExampleRow = styled.div<{ $header?: boolean }>`
-  display: grid;
-  grid-template-columns: 1.4fr 0.6fr 0.9fr;
-  padding: 9px 14px;
-  background: ${(p) => (p.$header ? p.theme.border.seg : 'transparent')};
-  color: ${(p) => (p.$header ? p.theme.color.ink3 : p.theme.color.ink2)};
-  border-top: ${(p) => (p.$header ? 'none' : `1px solid ${p.theme.border.fieldbd}`)};
-`
-
-const Hint = styled.div`
-  margin-top: auto;
-  font-size: 13px;
-  line-height: 1.7;
-  color: ${(p) => p.theme.color.ink3};
-`
-
-const EditorPanel = styled.div`
-  display: flex;
-  flex-direction: column;
-  background: ${(p) => p.theme.surface.code};
-  border: 1px solid ${(p) => p.theme.border.bd1};
-  border-radius: ${(p) => p.theme.radius.lg};
-  overflow: hidden;
-  ${glass(26)}
-`
-
-const EditorHeader = styled.div`
-  padding: 11px 20px;
-  border-bottom: 1px solid ${(p) => p.theme.border.bd1};
-  font-family: ${(p) => p.theme.font.mono};
-  font-size: 11px;
-  color: #8ea3bd;
-`
-
-const EditorBody = styled.div`
-  flex: 1;
-  display: flex;
-  font-family: ${(p) => p.theme.font.mono};
-  font-size: 13.5px;
-  line-height: 1.9;
-`
-
-const LineNumbers = styled.div`
-  padding: 18px 12px 18px 20px;
-  color: #4a5c74;
-  text-align: right;
-  user-select: none;
-`
-
-const Code = styled.pre`
-  margin: 0;
-  padding: 18px 20px 18px 8px;
-  color: #e2ecf7;
-  flex: 1;
-`
-
-const EditorFooter = styled.div`
-  padding: 14px 20px;
-  border-top: 1px solid ${(p) => p.theme.border.bd1};
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-`
-
-const Shortcuts = styled.span`
-  font-family: ${(p) => p.theme.font.mono};
-  font-size: 11.5px;
-  color: #7e92ab;
-`
-
-const SubmitButton = styled.button`
-  font-family: ${(p) => p.theme.font.mono};
-  font-size: 12px;
-  font-weight: 600;
-  background: ${(p) => p.theme.gradient.cta};
-  color: #fff;
-  padding: 10px 20px;
-  border-radius: 9px;
-  border: none;
-  cursor: pointer;
-`
+import {
+  Page,
+  TopBar,
+  TopBarTitle,
+  LangTabs,
+  LangTab,
+  Grid,
+  ProblemPanel,
+  ProblemTitle,
+  ProblemBody,
+  SubLabel,
+  Constraints,
+  ExampleTable,
+  ExampleRow,
+  Hint,
+  EditorPanel,
+  EditorHeader,
+  EditorBody,
+  LineNumbers,
+  Code,
+  EditorFooter,
+  Shortcuts,
+  SubmitButton,
+} from './CodeSolvePage.styles'
 
 const SOLUTION_CODE = `def solution(numbers, target):
     seen = {}

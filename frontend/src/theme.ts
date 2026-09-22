@@ -23,6 +23,8 @@ export type AppTheme = {
     glass6: string
     solid: string
     code: string
+    overlay: string
+    field: string
   }
   border: {
     bd1: string
@@ -93,7 +95,7 @@ export const lightTheme: AppTheme = {
   },
   surface: {
     body: '#e6eaed',
-    page: 'rgba(255,255,255,0.58)',
+    page: 'rgba(255, 255, 255, 0.72)',
     glow: 'none',
     glass2: 'rgba(255,255,255,0.46)',
     glass3: 'rgba(255,255,255,0.56)',
@@ -101,6 +103,8 @@ export const lightTheme: AppTheme = {
     glass6: 'rgba(255,255,255,0.82)',
     solid: 'rgba(255,255,255,0.9)',
     code: 'rgba(13,26,43,0.9)',
+    overlay: 'rgba(243, 244, 247, 0.56)',
+    field: 'rgba(255,255,255,0.5)',
   },
   border: {
     bd1: 'rgba(255,255,255,0.62)',
@@ -135,7 +139,7 @@ export const darkTheme: AppTheme = {
   },
   surface: {
     body: '#120f1c',
-    page: 'rgba(26,20,44,0.46)',
+    page: 'rgba(6, 1, 26, 0.37)',
     glow:
       'radial-gradient(620px 380px at 88% -8%, rgba(150,120,255,0.30), transparent 62%), radial-gradient(560px 420px at -6% 70%, rgba(110,80,210,0.26), transparent 62%)',
     glass2: 'rgba(255,255,255,0.06)',
@@ -144,6 +148,8 @@ export const darkTheme: AppTheme = {
     glass6: 'rgba(255,255,255,0.14)',
     solid: 'rgba(42,34,68,0.72)',
     code: 'rgba(12,9,22,0.55)',
+    overlay: 'rgba(4, 2, 10, 0.65)',
+    field: 'rgba(255,255,255,0.07)',
   },
   border: {
     bd1: 'rgba(255,255,255,0.10)',
