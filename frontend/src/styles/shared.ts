@@ -1,8 +1,8 @@
 import styled, { css } from 'styled-components'
 
-export const glass = (blurPx = 30) => css`
-  backdrop-filter: blur(${blurPx}px) saturate(120%);
-  -webkit-backdrop-filter: blur(${blurPx}px) saturate(120%);
+export const glass = (blurPx = 30, useSaturate = true) => css`
+  backdrop-filter: blur(${blurPx}px)${useSaturate ? ' saturate(120%)' : ''};
+  -webkit-backdrop-filter: blur(${blurPx}px)${useSaturate ? ' saturate(120%)' : ''};
 `
 
 // 얇고 테마별로 색이 갈리는 스크롤바. overflow-y: auto인 컨테이너에 붙여서 쓴다.
@@ -27,12 +27,40 @@ export const thinScrollbar = css`
   }
 `
 
+// 클릭 가능한 GlassCard 계열에서 공통으로 쓰는 hover. 라이트(뉴모피즘)는 그림자를
+// 더 진하게 눌러서 "떠오르는" 느낌을, 다크(유리질감)는 배경/그림자를 밝게 바꾼다.
+export const cardHoverLift = css`
+  &:hover {
+    ${(p) =>
+      p.theme.name === 'light'
+        ? css`
+            box-shadow: 10px 10px 20px rgba(163, 177, 198, 0.65), -10px -10px 20px rgba(255, 255, 255, 0.9);
+          `
+        : css`
+            background: ${p.theme.surface.glass6};
+            box-shadow: 0 22px 44px -24px rgba(23, 60, 92, 0.8);
+          `}
+  }
+`
+
 export const GlassCard = styled.div`
-  background: ${(p) => p.theme.surface.glass2};
-  border: 1px solid ${(p) => p.theme.border.bd2};
   border-radius: ${(p) => p.theme.radius.lg};
-  box-shadow: 0 18px 38px -28px rgba(23, 60, 92, 0.75);
-  ${glass(34)}
+
+  ${(p) =>
+    p.theme.name === 'light'
+      ? css`
+          /* 뉴모피즘: 배경보다 살짝 밝은 색 + 좌상단 밝은 하이라이트/우하단 진한
+             그림자로 "같은 재질에서 눌려 나온" 느낌을 낸다. 테두리·블러는 없앤다. */
+          background: #f3f2f22d;
+          border: 1px solid transparent;
+          box-shadow: 8px 8px 16px rgba(163, 177, 198, 0.55), -8px -8px 16px rgba(255, 255, 255, 1);
+        `
+      : css`
+          background: ${p.theme.surface.glass2};
+          border: 1px solid ${p.theme.border.bd2};
+          box-shadow: 0 18px 38px -28px rgba(23, 60, 92, 0.75);
+          ${glass(34)}
+        `}
 `
 
 export const Button = styled.button<{ $variant?: 'primary' | 'secondary' | 'ghost' }>`

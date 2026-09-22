@@ -1,5 +1,5 @@
 import styled from 'styled-components'
-import { GlassCard } from '../styles/shared'
+import { cardHoverLift, GlassCard } from '../styles/shared'
 
 export const Page = styled.div`
   padding: 34px 40px 48px;
@@ -47,10 +47,7 @@ export const NoteCard = styled(GlassCard)`
   cursor: pointer;
   transition: background 0.15s, box-shadow 0.15s;
 
-  &:hover {
-    background: ${(p) => p.theme.surface.glass6};
-    box-shadow: 0 22px 44px -24px rgba(23, 60, 92, 0.8);
-  }
+  ${cardHoverLift}
 `
 
 export const NoteMeta = styled.div`

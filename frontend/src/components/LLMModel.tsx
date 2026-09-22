@@ -46,7 +46,7 @@ const LLMModel = ({ state = 'idle', size = 48 }: Props) => {
         metalSh: '#738ece',
         accent: '#2887dc',
         eye: '#9bfff2',
-        face: '#204e773d',
+        face: '#5a96cb42',
         shadow: 'rgba(20, 30, 60, 0.22)',
       };
 
@@ -146,7 +146,7 @@ const ROBOT_CSS = `
 .tara-robot .chest { width: 26px; height: 26px; left: 50%; top: 8px; margin-left: -13px; background: var(--tr-face); border-radius: 8px; }
 .tara-robot .chest::after { content:""; position:absolute; inset: 7px; border-radius: 50%; background: var(--tr-accent); box-shadow: 0 0 8px color-mix(in srgb, var(--tr-accent) 60%, transparent); }
 
-.tara-robot .arm { width: 11px; height: 24px; top: 112px; background: var(--tr-metal-sh); border-radius: 6px; transform-origin: 50% 6px; }
+.tara-robot .arm { width: 11px; height: 24px; top: 117px; background: var(--tr-metal-sh); border-radius: 6px; transform-origin: 50% 6px; }
 .tara-robot .arm.l { left: 50%; margin-left: -33px; transform: rotate(17deg); }
 .tara-robot .arm.r { left: 50%; margin-left: 20px; transform: rotate(-17deg); }
 .tara-robot .hand { width: 15px; height: 15px; left: 50%; bottom: -6px; margin-left: -7.5px; background: var(--tr-metal); border-radius: 50%; border: 2px solid var(--tr-metal-sh); }

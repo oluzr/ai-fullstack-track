@@ -1,16 +1,45 @@
 import { NavLink } from 'react-router-dom'
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
 import { glass, thinScrollbar } from '../styles/shared'
 
 export const Shell = styled.div`
   position: relative;
   min-height: 100vh;
   padding: 24px;
-  background: ${(p) => p.theme.gradient.art};
   background-attachment: fixed;
   display: flex;
   align-items: center;
   justify-content: center;
+
+  /* 라이트 모드에선 그라디언트 없이 체크무늬만 쓴다 (연한 회색 바탕 위에 흰
+     반투명 사각형이 번갈아 놓이는 대각선 체크무늬). */
+  ${(p) =>
+    p.theme.name === 'light'
+      ? css`
+          background-color: ${p.theme.surface.body};
+          background-image:
+            linear-gradient(
+              45deg,
+              rgba(255, 255, 255, 0.6) 25%,
+              transparent 25%,
+              transparent 75%,
+              rgba(255, 255, 255, 0.6) 75%,
+              rgba(255, 255, 255, 0.6)
+            ),
+            linear-gradient(
+              45deg,
+              rgba(255, 255, 255, 0.6) 25%,
+              transparent 25%,
+              transparent 75%,
+              rgba(255, 255, 255, 0.6) 75%,
+              rgba(255, 255, 255, 0.6)
+            );
+          background-size: 32px 32px;
+          background-position: 0 0, 16px 16px;
+        `
+      : css`
+          background-image: ${p.theme.gradient.art};
+        `}
 `
 
 export const Frame = styled.div`
@@ -18,13 +47,13 @@ export const Frame = styled.div`
   z-index: 2;
   /* flex: 1; */
   /* min-height: calc(100vh - 48px); */
-  border-radius: ${(p) => p.theme.radius.xxl};
+  border-radius: ${(p) => p.theme.radius.md};
   overflow: hidden;
   background: ${(p) => p.theme.surface.page};
   box-shadow: ${(p) => p.theme.shadow.sheet};
   height:80vh;
   width:70vw;
-  ${glass(30)};
+  ${glass(7,false)};
 `
 
 // "카드 바깥으로 삐져나온 캐릭터" 연출. Frame(카드)이 overflow:hidden이라 로봇이
@@ -38,7 +67,7 @@ export const Frame = styled.div`
 // 활동 중(z-index 10) > Frame(2): 카드 밖에서 완전히 드러나며 더 커진다.
 export const RobotDock = styled.div`
   position: absolute;
-  left: calc(50% - 35vw - 54px);
+  left: calc(50% - 35vw - 50px);
   bottom: calc(10vh + 100px);
   width: 70px;
   height: 70px;
@@ -84,7 +113,7 @@ export const Sidebar = styled.aside`
   /* 로봇이 이 뒤에 실제로 가려지려면 어느 정도 불투명해야 해서 glass2 대신
      더 불투명한 solid 토큰을 쓴다 (다크모드 glass2는 거의 투명해서 안 가려짐). */
   background: ${(p) => p.theme.surface.solid};
-  border-right: 1px solid ${(p) => p.theme.border.bd1};
+  border-right: 1px solid ${(p) => p.theme.border.bd2};
   padding: 28px 20px;
   display: flex;
   flex-direction: column;
@@ -163,9 +192,9 @@ export const NavItem = styled(NavLink)`
   color: ${(p) => p.theme.color.ink3};
 
   &.active {
-    background: ${(p) => p.theme.border.bd2};
-    box-shadow: ${(p) => p.theme.shadow.activeNav};
-    font-weight: 700;
+    background: ${(p) => p.theme.surface.sideActive};
+    /* box-shadow: ${(p) => p.theme.shadow.activeNav}; */
+    font-weight: 600;
     color: ${(p) => p.theme.color.ink};
   }
 `

@@ -1,61 +1,7 @@
-export type AppTheme = {
-  name: 'light' | 'dark'
-  font: {
-    base: string
-    mono: string
-  }
-  color: {
-    ink: string
-    ink2: string
-    ink3: string
-    ink4: string
-    acc: string
-    btn: string
-    error: string
-  }
-  surface: {
-    body: string
-    page: string
-    glow: string
-    glass2: string
-    glass3: string
-    glass5: string
-    glass6: string
-    solid: string
-    code: string
-    overlay: string
-    field: string
-  }
-  border: {
-    bd1: string
-    bd2: string
-    line: string
-    fieldbd: string
-    seg: string
-    track: string
-  }
-  gradient: {
-    art: string
-    cta: string
-    bubble: string
-    logo: string
-    gaugeFill: string
-  }
-  radius: {
-    xs: string
-    sm: string
-    md: string
-    lg: string
-    xl: string
-    xxl: string
-    pill: string
-  }
-  shadow: {
-    sheet: string
-    activeNav: string
-    cta: string
-  }
-}
+// AppTheme은 아래 lightTheme 객체의 실제 모양에서 자동으로 뽑아낸 타입이다(파일
+// 맨 아래 `export type AppTheme = typeof lightTheme` 참고). 그래서 색을 새로
+// 추가할 때 여기 타입을 손으로 고칠 필요 없이, lightTheme/darkTheme 두 군데에만
+// 값을 넣으면 된다 — darkTheme 쪽에 깜빡하고 안 넣으면 그때 TS가 알려준다.
 
 const font = {
   base: `Pretendard, "Pretendard Variable", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif`,
@@ -81,8 +27,8 @@ const shadow = {
 const logoGradient = 'linear-gradient(140deg,#34d8ac,#6f8cf7)'
 const gaugeFillGradient = 'linear-gradient(90deg,#34d8ac,#5b8def)'
 
-export const lightTheme: AppTheme = {
-  name: 'light',
+export const lightTheme = {
+  name: 'light' as 'light' | 'dark',
   font,
   color: {
     ink: '#0f172a',
@@ -92,23 +38,27 @@ export const lightTheme: AppTheme = {
     acc: '#0b7a63',
     btn: '#0f172a',
     error: '#c0392b',
+    fontMain:'#000',
   },
   surface: {
     body: '#e6eaed',
-    page: 'rgba(255, 255, 255, 0.72)',
+    page: 'rgba(255, 255, 255, 0.3)',
     glow: 'none',
     glass2: 'rgba(255,255,255,0.46)',
     glass3: 'rgba(255,255,255,0.56)',
     glass5: 'rgba(255,255,255,0.72)',
     glass6: 'rgba(255,255,255,0.82)',
-    solid: 'rgba(255,255,255,0.9)',
+    solid: 'rgba(255, 255, 255, 0.54)',
     code: 'rgba(13,26,43,0.9)',
     overlay: 'rgba(243, 244, 247, 0.56)',
     field: 'rgba(255,255,255,0.5)',
+    explainBody:'#38d2b229',
+    sideActive:'rgb(233 236 239)'
   },
   border: {
     bd1: 'rgba(255,255,255,0.62)',
     bd2: 'rgba(255,255,255,0.9)',
+    bd3: 'rgb(118 183 187)',
     line: 'rgba(120,150,150,0.2)',
     fieldbd: 'rgba(120,150,150,0.28)',
     seg: 'rgba(255,255,255,0.4)',
@@ -125,6 +75,8 @@ export const lightTheme: AppTheme = {
   shadow,
 }
 
+export type AppTheme = typeof lightTheme
+
 export const darkTheme: AppTheme = {
   name: 'dark',
   font,
@@ -136,6 +88,7 @@ export const darkTheme: AppTheme = {
     acc: '#7cf0cd',
     btn: '#7676ff',
     error: '#ff6b5b',
+    fontMain:'#fff'
   },
   surface: {
     body: '#120f1c',
@@ -150,10 +103,13 @@ export const darkTheme: AppTheme = {
     code: 'rgba(12,9,22,0.55)',
     overlay: 'rgba(4, 2, 10, 0.65)',
     field: 'rgba(255,255,255,0.07)',
+    explainBody:'rgb(229 158 251 / 11%)',
+    sideActive:'rgb(155 117 155 / 18%)',
   },
   border: {
     bd1: 'rgba(255,255,255,0.10)',
     bd2: 'rgba(255,255,255,0.16)',
+    bd3: 'rgb(151 138 255 / 88%)',
     line: 'rgba(255,255,255,0.12)',
     fieldbd: 'rgba(255,255,255,0.16)',
     seg: 'rgba(255,255,255,0.07)',

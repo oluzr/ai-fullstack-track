@@ -45,11 +45,13 @@ export const ExplainRow = styled.div`
   display: flex;
 `
 
-export const ExplainCard = styled(GlassCard)`
+export const ExplainCard = styled.div`
   padding: 18px 20px;
   font-size: 14.5px;
   line-height: 1.8;
   color: ${(p) => p.theme.color.ink2};
+  border-left: 6px solid ${(p) => p.theme.border.bd3};
+  background: ${(p) => p.theme.surface.explainBody}
 `
 
 export const Section = styled.section`
