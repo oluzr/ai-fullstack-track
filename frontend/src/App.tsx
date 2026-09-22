@@ -6,18 +6,19 @@ import CodeSolvePage from './pages/CodeSolvePage'
 import ComingSoonPage from './pages/ComingSoonPage'
 import ConceptDetailPage from './pages/ConceptDetailPage'
 import ConceptsPage from './pages/ConceptsPage'
+import NotesPage from './pages/NotesPage'
 import SettingsPage from './pages/SettingsPage'
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route element={<AppShell />}>
           <Route index element={<Navigate to="/concepts" replace />} />
           <Route path="concepts" element={<ConceptsPage status="active" />} />
           <Route path="concepts/mastered" element={<ConceptsPage status="mastered" />} />
           <Route path="concepts/review" element={<ComingSoonPage title="오늘 복습" />} />
-          <Route path="concepts/notes" element={<ComingSoonPage title="메모" />} />
+          <Route path="concepts/notes" element={<NotesPage />} />
           <Route path="concepts/:id" element={<ConceptDetailPage />} />
           <Route path="code/read" element={<CodeReadPage />} />
           <Route path="code/solve" element={<CodeSolvePage />} />

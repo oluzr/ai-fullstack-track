@@ -9,6 +9,27 @@ from tools.notes import extract_mentions
 router = APIRouter()
 
 
+@router.get("/notes", response_model=list[NoteOut])
+def list_all_notes(db: Session = Depends(get_db)):
+    rows = (
+        db.query(Note, Concept)
+        .join(Concept, Concept.id == Note.concept_id)
+        .order_by(Note.created_at.desc())
+        .all()
+    )
+    return [
+        NoteOut(
+            id=n.id,
+            concept_id=n.concept_id,
+            concept_term=c.term,
+            body=n.body,
+            created_at=n.created_at,
+            is_backlink=False,
+        )
+        for n, c in rows
+    ]
+
+
 @router.post("/concepts/{concept_id}/notes", response_model=NoteOut)
 def create_note(concept_id: int, payload: NoteCreate, db: Session = Depends(get_db)):
     concept = db.get(Concept, concept_id)

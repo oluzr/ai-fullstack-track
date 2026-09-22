@@ -1,142 +1,42 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { FiArrowLeft } from 'react-icons/fi'
+import { FiArrowLeft, FiBookOpen } from 'react-icons/fi'
 import { useNavigate, useParams } from 'react-router-dom'
-import styled from 'styled-components'
 import { api, type Quiz, type QuizAnswerResult, type QuizType } from '../api'
 import GaugeBar from '../components/GaugeBar'
 import NotesPanel from '../components/NotesPanel'
 import { useConcepts } from '../hooks/useConcepts'
+import { flashAiPhase } from '../store/useAiActivityStore'
 import {
   Button,
   Choices,
   ChoiceLabel,
-  GlassCard,
   Modal,
   ModalActions,
   ModalOverlay,
   Muted,
   Textarea,
 } from '../styles/shared'
-
-const Page = styled.div`
-  padding: 34px 40px 48px;
-  display: flex;
-  flex-direction: column;
-  gap: 26px;
-  max-width: 720px;
-`
-
-const BackLink = styled.button`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  align-self: flex-start;
-  background: none;
-  border: none;
-  color: ${(p) => p.theme.color.acc};
-  font-size: 13.5px;
-  cursor: pointer;
-  padding: 0;
-`
-
-const TitleRow = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-`
-
-const Term = styled.h1`
-  font-size: 30px;
-  font-weight: 800;
-  color: ${(p) => p.theme.color.ink};
-  letter-spacing: -0.02em;
-`
-
-const Definition = styled.p`
-  font-size: 14.5px;
-  line-height: 1.8;
-  color: ${(p) => p.theme.color.ink3};
-`
-
-const Section = styled.section`
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-`
-
-const SectionTitle = styled.h2`
-  font-size: 18px;
-  font-weight: 700;
-  color: ${(p) => p.theme.color.ink};
-`
-
-const QuizButtons = styled.div`
-  display: flex;
-  gap: 10px;
-`
-
-const QuizCard = styled(GlassCard)`
-  padding: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-`
-
-const Question = styled.p`
-  font-size: 15.5px;
-  color: ${(p) => p.theme.color.ink};
-`
-
-const ResultRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-`
-
-const Donut = styled.div<{ $pct: number }>`
-  width: 52px;
-  height: 52px;
-  flex: none;
-  border-radius: 50%;
-  background: conic-gradient(
-    ${(p) => p.theme.color.acc} 0% ${(p) => p.$pct}%,
-    ${(p) => p.theme.border.track} ${(p) => p.$pct}% 100%
-  );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`
-
-const DonutInner = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: ${(p) => p.theme.surface.solid};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 800;
-  color: ${(p) => p.theme.color.ink};
-`
-
-const ResultText = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-`
-
-const ResultVerdict = styled.span<{ $correct?: boolean }>`
-  font-size: 17px;
-  font-weight: 800;
-  color: ${(p) => (p.$correct === false ? p.theme.color.error : p.theme.color.acc)};
-`
-
-const ResultDetail = styled.span`
-  font-size: 13.5px;
-  color: ${(p) => p.theme.color.ink3};
-`
+import {
+  Page,
+  BackLink,
+  TitleRow,
+  Term,
+  Definition,
+  ExplainRow,
+  ExplainCard,
+  Section,
+  SectionTitle,
+  QuizButtons,
+  QuizCard,
+  Question,
+  ResultRow,
+  Donut,
+  DonutInner,
+  ResultText,
+  ResultVerdict,
+  ResultDetail,
+} from './ConceptDetailPage.styles'
 
 export default function ConceptDetailPage() {
   const { id } = useParams()
@@ -154,12 +54,15 @@ export default function ConceptDetailPage() {
 
   const createQuiz = useMutation({
     mutationFn: (type: QuizType) => api.createQuiz(concept!.id, type),
+    onMutate: () => flashAiPhase('thinking'),
     onSuccess: (data) => {
+      flashAiPhase('done')
       setResult(null)
       setSelectedChoice('')
       setFreeAnswer('')
       setQuiz(data)
     },
+    onError: () => flashAiPhase('error'),
   })
 
   const answerQuiz = useMutation({
@@ -167,11 +70,14 @@ export default function ConceptDetailPage() {
       if (!quiz || !concept) throw new Error('진행 중인 퀴즈가 없습니다')
       return api.answerQuiz(concept.id, quiz.question, userAnswer)
     },
+    onMutate: () => flashAiPhase('thinking'),
     onSuccess: (res) => {
+      flashAiPhase('done')
       setResult(res)
       setGauge(res.mastery_gauge)
       if (res.mastery_ready) setShowMasteryModal(true)
     },
+    onError: () => flashAiPhase('error'),
   })
 
   const masterConcept = useMutation({
@@ -181,6 +87,13 @@ export default function ConceptDetailPage() {
       setShowMasteryModal(false)
       navigate('/concepts')
     },
+  })
+
+  const explain = useMutation({
+    mutationFn: () => api.explainConcept(concept!.id),
+    onMutate: () => flashAiPhase('thinking'),
+    onSuccess: () => flashAiPhase('done'),
+    onError: () => flashAiPhase('error'),
   })
 
   if (isLoading) return <Page>불러오는 중...</Page>
@@ -205,6 +118,14 @@ export default function ConceptDetailPage() {
         <Term>{concept.term}</Term>
         <Definition>{concept.definition}</Definition>
         <GaugeBar value={currentGauge} />
+
+        <ExplainRow>
+          <Button $variant="secondary" onClick={() => explain.mutate()} disabled={explain.isPending}>
+            <FiBookOpen /> {explain.data ? '다시 설명해줘' : '더 쉽게 설명해줘'}
+          </Button>
+        </ExplainRow>
+        {explain.isPending && <Muted>설명 만드는 중...</Muted>}
+        {explain.data && <ExplainCard>{explain.data.explanation}</ExplainCard>}
       </TitleRow>
 
       <Section>
@@ -291,7 +212,7 @@ export default function ConceptDetailPage() {
       <NotesPanel conceptId={concept.id} />
 
       {showMasteryModal && (
-        <ModalOverlay>
+        <ModalOverlay onClick={(e) => e.target === e.currentTarget && setShowMasteryModal(false)}>
           <Modal>
             <Muted>이해도 100%에 도달했습니다. 사전에서 제외하시겠어요?</Muted>
             <ModalActions>

@@ -1,8 +1,30 @@
 import styled, { css } from 'styled-components'
 
 export const glass = (blurPx = 30) => css`
-  backdrop-filter: blur(${blurPx}px) saturate(180%);
-  -webkit-backdrop-filter: blur(${blurPx}px) saturate(180%);
+  backdrop-filter: blur(${blurPx}px) saturate(120%);
+  -webkit-backdrop-filter: blur(${blurPx}px) saturate(120%);
+`
+
+// 얇고 테마별로 색이 갈리는 스크롤바. overflow-y: auto인 컨테이너에 붙여서 쓴다.
+export const thinScrollbar = css`
+  scrollbar-width: thin;
+  scrollbar-color: ${(p) => (p.theme.name === 'light' ? '#ffffff' : p.theme.color.ink4)} ${(p) => p.theme.border.track};
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: ${(p) => p.theme.border.track};
+    border-radius: ${(p) => p.theme.radius.pill};
+  }
+  &::-webkit-scrollbar-thumb {
+    background: ${(p) => (p.theme.name === 'light' ? '#ffffff' : p.theme.color.ink4)};
+    border: ${(p) => (p.theme.name === 'light' ? '1px solid rgba(0,0,0,0.08)' : 'none')};
+    border-radius: ${(p) => p.theme.radius.pill};
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: ${(p) => (p.theme.name === 'light' ? '#f2f2f2' : p.theme.color.ink3)};
+  }
 `
 
 export const GlassCard = styled.div`
@@ -122,7 +144,7 @@ export const Input = styled.input`
   padding: 13px 16px;
   font-family: inherit;
   font-size: 15.5px;
-  background: ${(p) => p.theme.surface.solid};
+  background: ${(p) => p.theme.surface.field};
   color: ${(p) => p.theme.color.ink};
   border: 1px solid ${(p) => p.theme.border.fieldbd};
   border-radius: ${(p) => p.theme.radius.sm};
@@ -140,7 +162,7 @@ export const Textarea = styled.textarea`
   padding: 13px 16px;
   font-family: inherit;
   font-size: 14.5px;
-  background: ${(p) => p.theme.surface.solid};
+  background: ${(p) => p.theme.surface.field};
   color: ${(p) => p.theme.color.ink};
   border: 1px solid ${(p) => p.theme.border.fieldbd};
   border-radius: ${(p) => p.theme.radius.sm};
@@ -179,7 +201,7 @@ export const ChoiceLabel = styled.label`
 export const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+  background: ${(p) => p.theme.surface.overlay};
   display: flex;
   align-items: center;
   justify-content: center;

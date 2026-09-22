@@ -1,5 +1,6 @@
 import json
 import os
+import time
 
 import litellm
 from dotenv import load_dotenv
@@ -13,10 +14,31 @@ MODEL = os.getenv("MODEL", "gemini/gemini-3.6-flash")
 # thinking 토큰을 줄인다 - 실제 테스트로 품질 저하 없이 출력 토큰이 크게 줄어드는 것 확인.
 REASONING_EFFORT = os.getenv("REASONING_EFFORT", "low")
 
+# Gemini가 "일시적으로 과부하"라며 503류 오류를 종종 던지는데, 몇 초 뒤 재시도하면
+# 대부분 바로 성공한다. 이런 일시적 오류만 짧게 재시도하고, 인증/잘못된 요청 같은
+# 재시도해도 똑같이 실패할 오류는 바로 올린다.
+_RETRYABLE_ERRORS = (
+    litellm.exceptions.ServiceUnavailableError,
+    litellm.exceptions.RateLimitError,
+    litellm.exceptions.Timeout,
+    litellm.exceptions.InternalServerError,
+    litellm.exceptions.APIConnectionError,
+)
+
+
+def _completion_with_retry(max_attempts: int = 3, base_delay: float = 1.5, **kwargs):
+    for attempt in range(max_attempts):
+        try:
+            return litellm.completion(**kwargs)
+        except _RETRYABLE_ERRORS:
+            if attempt == max_attempts - 1:
+                raise
+            time.sleep(base_delay * (2**attempt))
+
 
 def complete(messages: list[dict], tools: list[dict] | None = None):
     """LiteLLM 래퍼. 프로바이더 SDK를 직접 호출하지 않고 litellm.completion()만 사용한다."""
-    return litellm.completion(
+    return _completion_with_retry(
         model=MODEL,
         messages=messages,
         tools=tools,
@@ -27,7 +49,7 @@ def complete(messages: list[dict], tools: list[dict] | None = None):
 def complete_json(messages: list[dict]) -> dict:
     """응답을 JSON 객체로 강제하는 LiteLLM 호출. 파싱 실패 시 한 번 재시도한다."""
     for attempt in range(2):
-        response = litellm.completion(
+        response = _completion_with_retry(
             model=MODEL,
             messages=messages,
             response_format={"type": "json_object"},

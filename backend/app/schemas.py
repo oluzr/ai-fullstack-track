@@ -53,6 +53,10 @@ class QuizAnswerOut(BaseModel):
     mastery_ready: bool
 
 
+class ExplainOut(BaseModel):
+    explanation: str
+
+
 class NoteCreate(BaseModel):
     body: str
 
