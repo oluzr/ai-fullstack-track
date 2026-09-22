@@ -5,15 +5,29 @@ export const GlobalStyle = createGlobalStyle`
     color-scheme: light dark;
   }
 
-  body {
+  html, body {
     margin: 0;
-    font-family: system-ui, sans-serif;
-    background: ${(p) => p.theme.colors.background};
-    color: ${(p) => p.theme.colors.text};
+    min-height: 100%;
+    background: ${(p) => p.theme.surface.body};
+    background-attachment: fixed;
+  }
+
+  body {
+    font-family: ${(p) => p.theme.font.base};
+    color: ${(p) => p.theme.color.ink};
     transition: background 0.2s, color 0.2s;
   }
 
-  h1 {
-    font-size: 1.5rem;
+  * {
+    box-sizing: border-box;
+  }
+
+  h1, h2, h3, p {
+    margin: 0;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
   }
 `

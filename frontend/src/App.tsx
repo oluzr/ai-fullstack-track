@@ -1,30 +1,34 @@
-import { useState } from 'react'
-import styled from 'styled-components'
-import type { Concept } from './api'
-import ConceptDetail from './components/ConceptDetail'
-import ConceptList from './components/ConceptList'
-
-const AppWrapper = styled.div`
-  max-width: 720px;
-  margin: 2rem auto;
-  padding: 0 1rem 3rem;
-`
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import AppShell from './layout/AppShell'
+import CodeReadPage from './pages/CodeReadPage'
+import CodeResultPage from './pages/CodeResultPage'
+import CodeSolvePage from './pages/CodeSolvePage'
+import ComingSoonPage from './pages/ComingSoonPage'
+import ConceptDetailPage from './pages/ConceptDetailPage'
+import ConceptsPage from './pages/ConceptsPage'
+import SettingsPage from './pages/SettingsPage'
 
 function App() {
-  const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null)
-
   return (
-    <AppWrapper>
-      {selectedConcept ? (
-        <ConceptDetail
-          concept={selectedConcept}
-          onBack={() => setSelectedConcept(null)}
-          onMastered={() => setSelectedConcept(null)}
-        />
-      ) : (
-        <ConceptList onSelect={setSelectedConcept} />
-      )}
-    </AppWrapper>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<AppShell />}>
+          <Route index element={<Navigate to="/concepts" replace />} />
+          <Route path="concepts" element={<ConceptsPage status="active" />} />
+          <Route path="concepts/mastered" element={<ConceptsPage status="mastered" />} />
+          <Route path="concepts/review" element={<ComingSoonPage title="오늘 복습" />} />
+          <Route path="concepts/notes" element={<ComingSoonPage title="메모" />} />
+          <Route path="concepts/:id" element={<ConceptDetailPage />} />
+          <Route path="code/read" element={<CodeReadPage />} />
+          <Route path="code/solve" element={<CodeSolvePage />} />
+          <Route path="code/result" element={<CodeResultPage />} />
+          <Route path="code/progress" element={<ComingSoonPage title="학습 현황" />} />
+          <Route path="code/submissions" element={<ComingSoonPage title="제출 기록" />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="*" element={<Navigate to="/concepts" replace />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   )
 }
 

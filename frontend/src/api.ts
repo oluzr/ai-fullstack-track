@@ -1,6 +1,8 @@
-// dev: vite가 /concepts, /chat, /health 를 backend로 직접 프록시
+// dev: vite가 /api/* 를 backend로 리버스 프록시(prefix 제거)
 // prod: nginx가 /api/* 를 backend로 리버스 프록시
-const API_BASE = import.meta.env.DEV ? '' : '/api'
+// react-router 클라이언트 라우팅이 /concepts 같은 경로를 그대로 쓰므로
+// API는 항상 /api 프리픽스로 구분한다.
+const API_BASE = '/api'
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
