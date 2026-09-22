@@ -46,7 +46,7 @@ const LLMModel = ({ state = 'idle', size = 48 }: Props) => {
         metalSh: '#738ece',
         accent: '#2887dc',
         eye: '#9bfff2',
-        face: '#204e773d',
+        face: '#5a96cb42',
         shadow: 'rgba(20, 30, 60, 0.22)',
       };
 

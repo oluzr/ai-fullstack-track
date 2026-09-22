@@ -1,16 +1,45 @@
 import { NavLink } from 'react-router-dom'
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
 import { glass, thinScrollbar } from '../styles/shared'
 
 export const Shell = styled.div`
   position: relative;
   min-height: 100vh;
   padding: 24px;
-  background: ${(p) => p.theme.gradient.art};
   background-attachment: fixed;
   display: flex;
   align-items: center;
   justify-content: center;
+
+  /* 라이트 모드에선 그라디언트 없이 체크무늬만 쓴다 (연한 회색 바탕 위에 흰
+     반투명 사각형이 번갈아 놓이는 대각선 체크무늬). */
+  ${(p) =>
+    p.theme.name === 'light'
+      ? css`
+          background-color: ${p.theme.surface.body};
+          background-image:
+            linear-gradient(
+              45deg,
+              rgba(255, 255, 255, 0.6) 25%,
+              transparent 25%,
+              transparent 75%,
+              rgba(255, 255, 255, 0.6) 75%,
+              rgba(255, 255, 255, 0.6)
+            ),
+            linear-gradient(
+              45deg,
+              rgba(255, 255, 255, 0.6) 25%,
+              transparent 25%,
+              transparent 75%,
+              rgba(255, 255, 255, 0.6) 75%,
+              rgba(255, 255, 255, 0.6)
+            );
+          background-size: 32px 32px;
+          background-position: 0 0, 16px 16px;
+        `
+      : css`
+          background-image: ${p.theme.gradient.art};
+        `}
 `
 
 export const Frame = styled.div`
@@ -18,7 +47,7 @@ export const Frame = styled.div`
   z-index: 2;
   /* flex: 1; */
   /* min-height: calc(100vh - 48px); */
-  border-radius: ${(p) => p.theme.radius.xxl};
+  border-radius: ${(p) => p.theme.radius.md};
   overflow: hidden;
   background: ${(p) => p.theme.surface.page};
   box-shadow: ${(p) => p.theme.shadow.sheet};
