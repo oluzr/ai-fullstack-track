@@ -53,7 +53,7 @@ export const Frame = styled.div`
   box-shadow: ${(p) => p.theme.shadow.sheet};
   height:80vh;
   width:70vw;
-  ${glass(30)};
+  ${glass(7,false)};
 `
 
 // "카드 바깥으로 삐져나온 캐릭터" 연출. Frame(카드)이 overflow:hidden이라 로봇이
@@ -67,7 +67,7 @@ export const Frame = styled.div`
 // 활동 중(z-index 10) > Frame(2): 카드 밖에서 완전히 드러나며 더 커진다.
 export const RobotDock = styled.div`
   position: absolute;
-  left: calc(50% - 35vw - 54px);
+  left: calc(50% - 35vw - 50px);
   bottom: calc(10vh + 100px);
   width: 70px;
   height: 70px;
@@ -113,7 +113,7 @@ export const Sidebar = styled.aside`
   /* 로봇이 이 뒤에 실제로 가려지려면 어느 정도 불투명해야 해서 glass2 대신
      더 불투명한 solid 토큰을 쓴다 (다크모드 glass2는 거의 투명해서 안 가려짐). */
   background: ${(p) => p.theme.surface.solid};
-  border-right: 1px solid ${(p) => p.theme.border.bd1};
+  border-right: 1px solid ${(p) => p.theme.border.bd2};
   padding: 28px 20px;
   display: flex;
   flex-direction: column;
@@ -192,9 +192,9 @@ export const NavItem = styled(NavLink)`
   color: ${(p) => p.theme.color.ink3};
 
   &.active {
-    background: ${(p) => p.theme.border.bd2};
-    box-shadow: ${(p) => p.theme.shadow.activeNav};
-    font-weight: 700;
+    background: ${(p) => p.theme.surface.sideActive};
+    /* box-shadow: ${(p) => p.theme.shadow.activeNav}; */
+    font-weight: 600;
     color: ${(p) => p.theme.color.ink};
   }
 `

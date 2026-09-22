@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../api'
+import ThinkingDots from './ThinkingDots'
 import { flashAiPhase } from '../store/useAiActivityStore'
 import {
   Button,
@@ -141,7 +142,11 @@ export default function NewConceptModal({ onClose }: { onClose: () => void }) {
           <CloseButton onClick={onClose}>×</CloseButton>
         </ModalHeader>
 
-        {loading && <Muted>의미를 확인하는 중...</Muted>}
+        {loading && (
+          <Muted>
+            의미를 확인하는 중 <ThinkingDots />
+          </Muted>
+        )}
 
         {!loading && isAmbiguous && (
           <Field>

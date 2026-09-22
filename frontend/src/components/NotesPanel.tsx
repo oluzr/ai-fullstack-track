@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { FiPlus } from 'react-icons/fi'
+import { FiArrowUpRight, FiFileText, FiLink2, FiPlus } from 'react-icons/fi'
+import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { Button, Muted, Textarea } from '../styles/shared'
 import {
@@ -9,12 +10,15 @@ import {
   NoteForm,
   NotesGroup,
   GroupLabel,
-  NoteCard,
-  NoteSource,
-  NoteBody,
+  NotesGrid,
+  NoteTile,
+  NoteTileIcon,
+  NoteTileLabel,
+  NoteTileArrow,
 } from './NotesPanel.styles'
 
 export default function NotesPanel({ conceptId }: { conceptId: number }) {
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { data: notes = [] } = useQuery({
     queryKey: ['notes', conceptId],
@@ -58,22 +62,42 @@ export default function NotesPanel({ conceptId }: { conceptId: number }) {
       <NotesGroup>
         <GroupLabel>내가 남긴 메모</GroupLabel>
         {ownNotes.length === 0 && <Muted>아직 메모가 없습니다.</Muted>}
-        {ownNotes.map((n) => (
-          <NoteCard key={n.id}>
-            <NoteBody>{n.body}</NoteBody>
-          </NoteCard>
-        ))}
+        <NotesGrid>
+          {ownNotes.map((n) => (
+            <NoteTile key={n.id} type="button" title={n.body} onClick={() => navigate('/concepts/notes')}>
+              <NoteTileIcon>
+                <FiFileText />
+              </NoteTileIcon>
+              <NoteTileLabel>{n.body}</NoteTileLabel>
+              <NoteTileArrow>
+                <FiArrowUpRight />
+              </NoteTileArrow>
+            </NoteTile>
+          ))}
+        </NotesGrid>
       </NotesGroup>
 
       <NotesGroup>
         <GroupLabel>다른 메모에서 언급됨</GroupLabel>
         {backlinkedNotes.length === 0 && <Muted>언급된 메모가 없습니다.</Muted>}
-        {backlinkedNotes.map((n) => (
-          <NoteCard key={n.id} $backlink>
-            <NoteSource>{n.concept_term}에 속한 메모</NoteSource>
-            <NoteBody>{n.body}</NoteBody>
-          </NoteCard>
-        ))}
+        <NotesGrid>
+          {backlinkedNotes.map((n) => (
+            <NoteTile
+              key={n.id}
+              type="button"
+              title={`${n.concept_term}에 속한 메모: ${n.body}`}
+              onClick={() => navigate('/concepts/notes')}
+            >
+              <NoteTileIcon>
+                <FiLink2 />
+              </NoteTileIcon>
+              <NoteTileLabel>{n.body}</NoteTileLabel>
+              <NoteTileArrow>
+                <FiArrowUpRight />
+              </NoteTileArrow>
+            </NoteTile>
+          ))}
+        </NotesGrid>
       </NotesGroup>
     </Section>
   )

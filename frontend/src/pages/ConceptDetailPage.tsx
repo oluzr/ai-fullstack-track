@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { api, type Quiz, type QuizAnswerResult, type QuizType } from '../api'
 import GaugeBar from '../components/GaugeBar'
 import NotesPanel from '../components/NotesPanel'
+import ThinkingDots from '../components/ThinkingDots'
 import { useConcepts } from '../hooks/useConcepts'
 import { flashAiPhase } from '../store/useAiActivityStore'
 import {
@@ -96,7 +97,12 @@ export default function ConceptDetailPage() {
     onError: () => flashAiPhase('error'),
   })
 
-  if (isLoading) return <Page>불러오는 중...</Page>
+  if (isLoading)
+    return (
+      <Page>
+        불러오는 중 <ThinkingDots />
+      </Page>
+    )
   if (!concept) return <Page>존재하지 않는 개념입니다.</Page>
 
   const currentGauge = gauge ?? concept.mastery_gauge
@@ -124,7 +130,11 @@ export default function ConceptDetailPage() {
             <FiBookOpen /> {explain.data ? '다시 설명해줘' : '더 쉽게 설명해줘'}
           </Button>
         </ExplainRow>
-        {explain.isPending && <Muted>설명 만드는 중...</Muted>}
+        {explain.isPending && (
+          <Muted>
+            설명 만드는 중 <ThinkingDots />
+          </Muted>
+        )}
         {explain.data && <ExplainCard>{explain.data.explanation}</ExplainCard>}
       </TitleRow>
 
