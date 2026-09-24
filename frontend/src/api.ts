@@ -10,6 +10,7 @@ import type {
   CodeProblem,
   CodeSubmitResult,
   CodeSubmission,
+  ChatStreamEvent,
 } from './types'
 
 // dev: vite가 /api/* 를 backend로 리버스 프록시(prefix 제거)
@@ -84,4 +85,42 @@ export const api = {
     }),
 
   listCodeSubmissions: () => request<CodeSubmission[]>('/code/submissions'),
+}
+
+// /chat은 결과를 한 번에 주지 않고, 줄마다 하나씩 JSON 이벤트(NDJSON)를 흘려준다
+// (thinking → tool_call/tool_result 0회 이상 반복 → content). fetch로 직접 열어
+// 응답 바디를 스트림으로 읽는 이유는, EventSource가 GET만 지원해서 POST 바디로
+// 메시지를 보내야 하는 이 요청엔 못 쓰기 때문이다.
+export async function streamChat(
+  message: string,
+  onEvent: (event: ChatStreamEvent) => void,
+  signal?: AbortSignal,
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message }),
+    signal,
+  })
+  if (!res.ok || !res.body) {
+    const text = await res.text()
+    throw new Error(text || `요청 실패: ${res.status}`)
+  }
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+
+    const lines = buffer.split('\n')
+    buffer = lines.pop() ?? ''
+    for (const line of lines) {
+      if (line.trim()) onEvent(JSON.parse(line) as ChatStreamEvent)
+    }
+  }
+  if (buffer.trim()) onEvent(JSON.parse(buffer) as ChatStreamEvent)
 }
