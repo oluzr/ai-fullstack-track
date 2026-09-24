@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom";
 import styled, { css } from "styled-components";
 import { glass, thinScrollbar } from "../styles/shared";
 
-export const Shell = styled.div`
+export const Shell = styled.div<{ $chatOpen?: boolean }>`
   position: relative;
   min-height: 100vh;
   padding: 24px;
@@ -10,6 +10,14 @@ export const Shell = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+
+  /* Frame의 실제 너비를 여기 한 곳에만 적어두고, Frame 자신과 RobotDock(형제라
+     상속으로만 값을 받을 수 있음) 둘 다 이 변수를 읽게 한다. 예전엔 이 너비
+     공식을 Frame(width)과 RobotDock(left 계산)에 각각 따로 적어뒀는데,
+     Frame 쪽 max-width나 폭을 건드릴 때마다 RobotDock 쪽을 깜빡하고 안 고쳐서
+     로봇이 카드 가장자리와 어긋나는 문제가 있었다 — 이제는 값이 하나뿐이라
+     어긋날 일이 없다. */
+  --frame-w: ${(p) => (p.$chatOpen ? 'min(calc(70vw + 400px), 1900px)' : 'min(70vw, 1900px)')};
 
   /* 라이트 모드에선 그라디언트 없이 체크무늬만 쓴다 (연한 회색 바탕 위에 흰
      반투명 사각형이 번갈아 놓이는 대각선 체크무늬). */
@@ -44,7 +52,7 @@ export const Shell = styled.div`
         `}
 `;
 
-export const Frame = styled.div<{ $chatOpen?: boolean }>`
+export const Frame = styled.div`
   position: relative;
   z-index: 2;
   /* flex: 1; */
@@ -55,7 +63,7 @@ export const Frame = styled.div<{ $chatOpen?: boolean }>`
   background: ${(p) => p.theme.surface.page};
   box-shadow: ${(p) => p.theme.shadow.sheet};
   height: 80vh;
-  width: ${(p) => (p.$chatOpen ? "calc(70vw + 400px)" : "70vw")};
+  width: var(--frame-w);
   max-width: 1900px;
   transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   ${glass(7, false)};
@@ -63,25 +71,44 @@ export const Frame = styled.div<{ $chatOpen?: boolean }>`
 
 // "카드 바깥으로 삐져나온 캐릭터" 연출. Frame(카드)이 overflow:hidden이라 로봇이
 // Frame 안에 있으면 카드 경계 밖으로 절대 못 나가므로, Frame의 형제로 Shell에 바로
-// 둔다. Shell은 Frame을 flex로 가운데 정렬하므로, Frame의 실제 좌측/하단 경계는
-// Shell 기준 calc(50% - 35vw) / calc(50% - 40vh)에 온다(Frame이 70vw x 80vh라서
-// 그 절반씩). 거기서 34px만 더 왼쪽으로 밀어서 카드 왼쪽 바깥 가장자리에 걸치게 한다.
-// 채팅 패널이 열리면 Frame 너비가 오른쪽으로만 400px 늘지만, Shell이 여전히
-// 가운데 정렬하므로 왼쪽 경계는 그 절반인 200px만큼 더 왼쪽으로 밀린다 — 그만큼
-// 같이 보정해줘야 로봇이 카드 왼쪽 가장자리에 계속 걸쳐 있다.
+// 둔다. Shell은 Frame을 flex로 가운데 정렬하므로, Frame의 실제 좌측 경계는 Shell
+// 기준 calc(50% - var(--frame-w)/2)에 온다. 거기서 50px 더 왼쪽으로 밀어서 카드
+// 왼쪽 바깥 가장자리에 걸치게 한다.
+//
+// 채팅 패널이 열리면 로봇을 왼쪽 가장자리에 그대로 붙잡아두는 대신(카드가 계속
+// 넓어지는 동안 매번 새 오프셋을 손으로 맞춰야 해서 자꾸 어긋났었다) 반대쪽인
+// Frame 오른쪽 가장자리로 옮겨 걸치게 한다 — 이번엔 채팅 패널까지 포함한
+// Frame이 넓어지는 동안 동일한 계산식이 반대쪽에서 그대로 성립한다. 로봇
+// 그림 자체가 "왼쪽으로 삐져나오는" 포즈라서 scaleX(-1)로 좌우 반전한다.
 //
 // 평소(z-index 1) < Frame(z-index 2): Frame 안쪽으로 겹치는 부분은 Frame 내부의
-// Sidebar 배경(불투명)에 가려지고, 카드 밖으로 나온 부분만 보인다.
+// Sidebar/ChatPanel 배경(둘 다 불투명한 surface.solid)에 가려지고, 카드 밖으로
+// 나온 부분만 보인다.
 // 활동 중(z-index 10) > Frame(2): 카드 밖에서 완전히 드러나며 더 커진다.
-export const RobotDock = styled.div<{ $chatOpen?: boolean }>`
+export const RobotDock = styled.div<{ $chatOpen?: boolean; $active?: boolean }>`
   position: absolute;
-  left: ${(p) =>
-    p.$chatOpen ? "calc(50% - 35vw - 250px)" : "calc(50% - 35vw - 50px)"};
+  ${(p) =>
+    p.$chatOpen
+      ? css`
+          left: auto;
+          right: calc(50% - var(--frame-w) / 2 - 50px);
+        `
+      : css`
+          left: calc(50% - var(--frame-w) / 2 - 50px);
+          right: auto;
+        `}
   bottom: calc(10vh + 100px);
   width: 70px;
   height: 70px;
   pointer-events: none;
-  transition: left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: scaleX(${(p) => (p.$chatOpen ? -1 : 1)});
+  /* transform이 있으면(scaleX(1)이라도) 이 요소가 새 stacking context를 만들어서,
+     안쪽 RobotPop의 z-index(평소 1 / 활동 중 10)가 더 이상 Frame(z-index 2)과
+     직접 비교되지 않고 여기 갇혀버린다 — 그러면 RobotDock 전체가 z-index:auto(=0)
+     취급을 받아 활동 중에도 항상 Frame보다 아래로 깔린다. 그래서 같은 값을
+     여기에도 반영해줘야 "평소엔 카드에 가려지고, 활동 중엔 위로 드러나는" 원래
+     효과가 유지된다. */
+  z-index: ${(p) => (p.$active ? 10 : 1)};
 
   @media (max-width: 860px) {
     display: none;

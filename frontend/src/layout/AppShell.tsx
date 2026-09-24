@@ -39,8 +39,8 @@ export default function AppShell() {
   const [isChatOpen, setIsChatOpen] = useState(false)
 
   return (
-    <Shell>
-      <Frame $chatOpen={isChatOpen}>
+    <Shell $chatOpen={isChatOpen}>
+      <Frame>
         <Glow />
         <Inner>
           <Sidebar>
@@ -91,8 +91,9 @@ export default function AppShell() {
       </Frame>
 
       {/* Frame이 overflow:hidden이라 카드 안에 있으면 절대 카드 밖으로 못 나가서,
-          Frame의 형제로 뺐다. Frame 왼쪽 바깥 가장자리에 걸치도록 배치. */}
-      <RobotDock $chatOpen={isChatOpen}>
+          Frame의 형제로 뺐다. 평소엔 Frame 왼쪽 가장자리, 채팅 패널이 열리면
+          오른쪽 가장자리(좌우 반전)에 걸치도록 배치. */}
+      <RobotDock $chatOpen={isChatOpen} $active={aiActive}>
         <RobotPop $active={aiActive} onClick={() => setIsChatOpen((v) => !v)}>
           <LLMModel size={106} state={aiPhase} />
         </RobotPop>
