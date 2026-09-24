@@ -40,11 +40,15 @@ export const LangTabs = styled.div`
   font-size: 11.5px;
 `
 
-export const LangTab = styled.span<{ $active?: boolean }>`
+export const LangTab = styled.button<{ $active?: boolean }>`
   padding: 6px 12px;
+  border: none;
   border-radius: ${(p) => p.theme.radius.xs};
   background: ${(p) => (p.$active ? p.theme.color.btn : p.theme.border.bd1)};
   color: ${(p) => (p.$active ? '#fff' : p.theme.color.ink3)};
+  font-family: ${(p) => p.theme.font.mono};
+  font-size: inherit;
+  cursor: pointer;
 `
 
 export const Grid = styled.div`
@@ -108,7 +112,7 @@ export const ExampleTable = styled.div`
 
 export const ExampleRow = styled.div<{ $header?: boolean }>`
   display: grid;
-  grid-template-columns: 1.4fr 0.6fr 0.9fr;
+  grid-template-columns: 1.6fr 1fr;
   padding: 9px 14px;
   background: ${(p) => (p.$header ? p.theme.border.seg : 'transparent')};
   color: ${(p) => (p.$header ? p.theme.color.ink3 : p.theme.color.ink2)};
@@ -158,11 +162,22 @@ export const LineNumbers = styled.div`
   user-select: none;
 `
 
-export const Code = styled.pre`
+export const CodeInput = styled.textarea`
   margin: 0;
   padding: 18px 20px 18px 8px;
   color: #e2ecf7;
   flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+
+  &::placeholder {
+    color: #4a5c74;
+  }
 `
 
 export const EditorFooter = styled.div`
@@ -171,12 +186,7 @@ export const EditorFooter = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-`
-
-export const Shortcuts = styled.span`
-  font-family: ${(p) => p.theme.font.mono};
-  font-size: 11.5px;
-  color: #7e92ab;
+  gap: 12px;
 `
 
 export const SubmitButton = styled.button`

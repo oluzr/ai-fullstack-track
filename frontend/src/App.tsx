@@ -3,6 +3,7 @@ import AppShell from './layout/AppShell'
 import CodeReadPage from './pages/CodeReadPage'
 import CodeResultPage from './pages/CodeResultPage'
 import CodeSolvePage from './pages/CodeSolvePage'
+import CodeSubmissionsPage from './pages/CodeSubmissionsPage'
 import ComingSoonPage from './pages/ComingSoonPage'
 import ConceptDetailPage from './pages/ConceptDetailPage'
 import ConceptsPage from './pages/ConceptsPage'
@@ -24,7 +25,7 @@ function App() {
           <Route path="code/solve" element={<CodeSolvePage />} />
           <Route path="code/result" element={<CodeResultPage />} />
           <Route path="code/progress" element={<ComingSoonPage title="학습 현황" />} />
-          <Route path="code/submissions" element={<ComingSoonPage title="제출 기록" />} />
+          <Route path="code/submissions" element={<CodeSubmissionsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/concepts" replace />} />
         </Route>
