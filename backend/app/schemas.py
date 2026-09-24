@@ -68,3 +68,55 @@ class NoteOut(BaseModel):
     body: str
     created_at: datetime
     is_backlink: bool
+
+
+class CodeExample(BaseModel):
+    input: str
+    output: str
+
+
+class CodeProblemListOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    difficulty: str
+
+
+class CodeProblemOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    prompt: str
+    constraints: str
+    examples: list[CodeExample]
+    difficulty: str
+
+
+class CodeSubmitRequest(BaseModel):
+    language: str
+    code: str
+
+
+class CodeFeedback(BaseModel):
+    correctness: str
+    complexity: str
+    improvement: str
+
+
+class CodeSubmitOut(BaseModel):
+    passed: bool
+    score: int
+    feedback: CodeFeedback
+
+
+class CodeSubmissionOut(BaseModel):
+    id: int
+    problem_id: int
+    problem_title: str
+    language: str
+    passed: bool
+    score: int
+    feedback: CodeFeedback
+    created_at: datetime

@@ -1,4 +1,10 @@
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { api } from '../api'
+import ThinkingDots from '../components/ThinkingDots'
+import { flashAiPhase } from '../store/useAiActivityStore'
+import { Muted } from '../styles/shared'
 import {
   Page,
   TopBar,
@@ -18,92 +24,135 @@ import {
   EditorHeader,
   EditorBody,
   LineNumbers,
-  Code,
+  CodeInput,
   EditorFooter,
-  Shortcuts,
   SubmitButton,
 } from './CodeSolvePage.styles'
 
-const SOLUTION_CODE = `def solution(numbers, target):
-    seen = {}
-    for i, n in enumerate(numbers):
-        if target - n in seen:
-            return [seen[target - n], i]
-        seen[n] = i
-    return []`
+const LANGUAGES = [
+  { id: 'python', label: 'python', ext: 'py' },
+  { id: 'ts', label: 'ts', ext: 'ts' },
+  { id: 'go', label: 'go', ext: 'go' },
+] as const
 
 export default function CodeSolvePage() {
   const navigate = useNavigate()
-  const lines = SOLUTION_CODE.split('\n').map((_, i) => i + 1)
+  const [language, setLanguage] = useState<(typeof LANGUAGES)[number]['id']>('python')
+  const [code, setCode] = useState('')
+
+  const { data: problems } = useQuery({
+    queryKey: ['code-problems'],
+    queryFn: api.listCodeProblems,
+  })
+  const problemId = problems?.[0]?.id
+  const { data: problem, isLoading } = useQuery({
+    queryKey: ['code-problem', problemId],
+    queryFn: () => api.getCodeProblem(problemId!),
+    enabled: problemId !== undefined,
+  })
+
+  const submit = useMutation({
+    mutationFn: () => api.submitCode(problem!.id, language, code),
+    onMutate: () => flashAiPhase('thinking'),
+    onSuccess: (result) => {
+      flashAiPhase('done')
+      navigate('/code/result', {
+        state: { result, problemTitle: problem!.title, language },
+      })
+    },
+    onError: () => flashAiPhase('error'),
+  })
+
+  if (isLoading || !problem)
+    return (
+      <Page>
+        <TopBar>
+          <TopBarTitle>
+            불러오는 중 <ThinkingDots />
+          </TopBarTitle>
+        </TopBar>
+      </Page>
+    )
+
+  const lines = code.split('\n')
+  const activeLang = LANGUAGES.find((l) => l.id === language)!
 
   return (
     <Page>
       <TopBar>
         <TopBarTitle>
-          문제 풀기 <strong>/ 두 수의 합</strong> <em>[lv2] (목업 화면)</em>
+          문제 풀기 <strong>/ {problem.title}</strong> <em>[{problem.difficulty}]</em>
         </TopBarTitle>
         <LangTabs>
-          <LangTab $active>python</LangTab>
-          <LangTab>ts</LangTab>
-          <LangTab>go</LangTab>
+          {LANGUAGES.map((l) => (
+            <LangTab key={l.id} $active={l.id === language} onClick={() => setLanguage(l.id)}>
+              {l.label}
+            </LangTab>
+          ))}
         </LangTabs>
       </TopBar>
 
       <Grid>
         <ProblemPanel>
           <div>
-            <ProblemTitle>두 수의 합</ProblemTitle>
-            <ProblemBody>
-              정수 배열 numbers와 목표값 target이 주어질 때, 더해서 target이 되는 두 원소의 인덱스를
-              오름차순으로 반환하세요.
-            </ProblemBody>
+            <ProblemTitle>{problem.title}</ProblemTitle>
+            <ProblemBody>{problem.prompt}</ProblemBody>
           </div>
           <div>
             <SubLabel>제약사항</SubLabel>
             <Constraints>
-              2 ≤ len(numbers) ≤ 10000
-              <br />
-              정답은 유일
-              <br />
-              같은 원소 재사용 불가
+              {problem.constraints.split('\n').map((line, i) => (
+                <span key={i}>
+                  {line}
+                  <br />
+                </span>
+              ))}
             </Constraints>
           </div>
           <div>
             <SubLabel>입출력 예</SubLabel>
             <ExampleTable>
               <ExampleRow $header>
-                <span>numbers</span>
-                <span>target</span>
-                <span>result</span>
+                <span>input</span>
+                <span>output</span>
               </ExampleRow>
-              <ExampleRow>
-                <span>[2,7,11,15]</span>
-                <span>9</span>
-                <span>[0,1]</span>
-              </ExampleRow>
-              <ExampleRow>
-                <span>[3,2,4]</span>
-                <span>6</span>
-                <span>[1,2]</span>
-              </ExampleRow>
+              {problem.examples.map((ex, i) => (
+                <ExampleRow key={i}>
+                  <span>{ex.input}</span>
+                  <span>{ex.output}</span>
+                </ExampleRow>
+              ))}
             </ExampleTable>
           </div>
-          <Hint>말하면 힌트를 요청하세요. 힌트를 쓰면 점수에서 5점이 차감됩니다.</Hint>
+          <Hint>힌트 요청 기능은 아직 준비 중입니다.</Hint>
         </ProblemPanel>
 
         <EditorPanel>
-          <EditorHeader>solution.py</EditorHeader>
+          <EditorHeader>solution.{activeLang.ext}</EditorHeader>
           <EditorBody>
             <LineNumbers>
-              {lines.map((n) => (
-                <div key={n}>{n}</div>
+              {lines.map((_, i) => (
+                <div key={i}>{i + 1}</div>
               ))}
             </LineNumbers>
-            <Code>{SOLUTION_CODE}</Code>
+            <CodeInput
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="여기에 코드를 작성하세요"
+              spellCheck={false}
+            />
           </EditorBody>
           <EditorFooter>
-            <Shortcuts>⌘⏎ 제출 · ⌘R 초기화 · ⌘/ 힌트</Shortcuts>
-            <SubmitButton onClick={() => navigate('/code/result')}>제출</SubmitButton>
+            {submit.isPending ? (
+              <Muted>
+                LLM이 코드를 검토하는 중 <ThinkingDots />
+              </Muted>
+            ) : (
+              <span />
+            )}
+            <SubmitButton onClick={() => submit.mutate()} disabled={!code.trim() || submit.isPending}>
+              제출
+            </SubmitButton>
           </EditorFooter>
         </EditorPanel>
       </Grid>

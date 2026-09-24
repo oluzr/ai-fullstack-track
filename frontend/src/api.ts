@@ -59,6 +59,49 @@ export type Note = {
   is_backlink: boolean
 }
 
+export type CodeProblemSummary = {
+  id: number
+  title: string
+  difficulty: string
+}
+
+export type CodeExample = {
+  input: string
+  output: string
+}
+
+export type CodeProblem = {
+  id: number
+  title: string
+  prompt: string
+  constraints: string
+  examples: CodeExample[]
+  difficulty: string
+}
+
+export type CodeFeedback = {
+  correctness: string
+  complexity: string
+  improvement: string
+}
+
+export type CodeSubmitResult = {
+  passed: boolean
+  score: number
+  feedback: CodeFeedback
+}
+
+export type CodeSubmission = {
+  id: number
+  problem_id: number
+  problem_title: string
+  language: string
+  passed: boolean
+  score: number
+  feedback: CodeFeedback
+  created_at: string
+}
+
 export const api = {
   listConcepts: () => request<Concept[]>('/concepts'),
 
@@ -101,4 +144,16 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ body }),
     }),
+
+  listCodeProblems: () => request<CodeProblemSummary[]>('/code/problems'),
+
+  getCodeProblem: (problemId: number) => request<CodeProblem>(`/code/problems/${problemId}`),
+
+  submitCode: (problemId: number, language: string, code: string) =>
+    request<CodeSubmitResult>(`/code/problems/${problemId}/submit`, {
+      method: 'POST',
+      body: JSON.stringify({ language, code }),
+    }),
+
+  listCodeSubmissions: () => request<CodeSubmission[]>('/code/submissions'),
 }

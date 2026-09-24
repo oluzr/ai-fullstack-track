@@ -240,6 +240,7 @@ export const Main = styled.main`
   min-width: 0;
   height: 100%;
   overflow-y: auto;
+  background: ${(p) => p.theme.surface.mainBody};
   ${thinScrollbar}
 
   @media (max-width: 860px) {

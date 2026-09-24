@@ -2,15 +2,20 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from agent.loop import run_agent
-from app.routers import concepts, notes
-from db.base import Base, engine
+from app.routers import code, concepts, notes
+from db.base import Base, SessionLocal, engine
+from db.seed import seed_code_problems
 
 Base.metadata.create_all(bind=engine)
+
+with SessionLocal() as _db:
+    seed_code_problems(_db)
 
 app = FastAPI(title="AI Fullstack Track Backend")
 
 app.include_router(concepts.router)
 app.include_router(notes.router)
+app.include_router(code.router)
 
 
 class ChatRequest(BaseModel):

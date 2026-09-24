@@ -127,7 +127,7 @@ export default function ConceptDetailPage() {
 
         <ExplainRow>
           <Button $variant="secondary" onClick={() => explain.mutate()} disabled={explain.isPending}>
-            <FiBookOpen /> {explain.data ? '다시 설명해줘' : '더 쉽게 설명해줘'}
+            <FiBookOpen /> {explain.data ? '다른 설명 보기' : '추가 설명 보기'}
           </Button>
         </ExplainRow>
         {explain.isPending && (
@@ -142,13 +142,18 @@ export default function ConceptDetailPage() {
         <SectionTitle>퀴즈</SectionTitle>
         {!quiz && (
           <QuizButtons>
-            <Button onClick={() => createQuiz.mutate('mc')} disabled={createQuiz.isPending}>
+            <Button $variant="secondary" onClick={() => createQuiz.mutate('mc')} disabled={createQuiz.isPending}>
               객관식 문제
             </Button>
             <Button $variant="secondary" onClick={() => createQuiz.mutate('free')} disabled={createQuiz.isPending}>
               서술형 문제
             </Button>
           </QuizButtons>
+        )}
+        {createQuiz.isPending && (
+          <Muted>
+            문제 생성 중 <ThinkingDots />
+          </Muted>
         )}
 
         {quiz && (

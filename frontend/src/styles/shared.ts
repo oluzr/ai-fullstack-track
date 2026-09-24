@@ -87,7 +87,7 @@ export const Button = styled.button<{ $variant?: 'primary' | 'secondary' | 'ghos
   ${(p) =>
     p.$variant === 'secondary' &&
     css`
-      background: ${p.theme.surface.glass5};
+      background: ${p.theme.surface.glass2};
       border: 1px solid ${p.theme.border.bd2};
       color: ${p.theme.color.ink3};
       ${glass(26)}
@@ -224,6 +224,7 @@ export const ChoiceLabel = styled.label`
   align-items: center;
   gap: 0.5rem;
   font-size: 14.5px;
+  line-height: 1.5;
 `
 
 export const ModalOverlay = styled.div`

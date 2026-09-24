@@ -43,12 +43,12 @@ export const Title = styled.div`
   letter-spacing: -0.025em;
 `
 
-export const Donut = styled.div`
+export const Donut = styled.div<{ $pct: number }>`
   width: 104px;
   height: 104px;
   flex: none;
   border-radius: 50%;
-  background: conic-gradient(#25cfa0 0% 88%, ${(p) => p.theme.border.track} 88% 100%);
+  background: conic-gradient(#25cfa0 0% ${(p) => p.$pct}%, ${(p) => p.theme.border.track} ${(p) => p.$pct}% 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -76,27 +76,6 @@ export const ScoreMax = styled.span`
   font-family: ${(p) => p.theme.font.mono};
   font-size: 10px;
   color: ${(p) => p.theme.color.ink3};
-`
-
-export const GaugeRow = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`
-
-export const GaugeLabel = styled.div`
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  color: ${(p) => p.theme.color.ink3};
-`
-
-export const GaugeTrack = styled.div`
-  height: 8px;
-  background: ${(p) => p.theme.border.line};
-  border-radius: ${(p) => p.theme.radius.pill};
-  overflow: hidden;
-  display: flex;
 `
 
 export const FeedbackList = styled.div`

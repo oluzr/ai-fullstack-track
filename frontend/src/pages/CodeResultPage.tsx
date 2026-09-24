@@ -1,4 +1,5 @@
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import type { CodeSubmitResult } from '../api'
 import { Button } from '../styles/shared'
 import {
   Page,
@@ -11,9 +12,6 @@ import {
   DonutInner,
   Score,
   ScoreMax,
-  GaugeRow,
-  GaugeLabel,
-  GaugeTrack,
   FeedbackList,
   FeedbackCard,
   FeedbackLabel,
@@ -21,48 +19,59 @@ import {
   Actions,
 } from './CodeResultPage.styles'
 
+type LocationState = {
+  result: CodeSubmitResult
+  problemTitle: string
+  language: string
+}
+
 export default function CodeResultPage() {
   const navigate = useNavigate()
+  const { state } = useLocation()
+  const data = state as LocationState | null
+
+  if (!data)
+    return (
+      <Page>
+        <Card>
+          <Title>결과가 없습니다</Title>
+          <Button onClick={() => navigate('/code/solve')}>문제 풀러 가기</Button>
+        </Card>
+      </Page>
+    )
+
+  const { result, problemTitle, language } = data
 
   return (
     <Page>
       <Card>
         <Header>
           <HeaderText>
-            <Meta>두 수의 합 · Python · 03:12 (목업 화면)</Meta>
-            <Title>통과했습니다</Title>
+            <Meta>
+              {problemTitle} · {language} · LLM 리뷰 (실제 실행 결과 아님)
+            </Meta>
+            <Title>{result.passed ? '통과했습니다' : '아직 부족합니다'}</Title>
           </HeaderText>
-          <Donut>
+          <Donut $pct={result.score}>
             <DonutInner>
-              <Score>88</Score>
+              <Score>{result.score}</Score>
               <ScoreMax>/100</ScoreMax>
             </DonutInner>
           </Donut>
         </Header>
 
-        <GaugeRow>
-          <GaugeLabel>
-            <span>이해도</span>
-            <span>52% → 70%</span>
-          </GaugeLabel>
-          <GaugeTrack>
-            <div style={{ width: '52%', background: '#0f9b7e' }} />
-            <div style={{ width: '18%', background: '#7fe3c4' }} />
-          </GaugeTrack>
-        </GaugeRow>
-
         <FeedbackList>
           <FeedbackCard>
             <FeedbackLabel>정확성</FeedbackLabel>
-            <FeedbackText>테스트케이스 12/12 통과.</FeedbackText>
+            <FeedbackText>{result.feedback.correctness}</FeedbackText>
           </FeedbackCard>
           <FeedbackCard>
             <FeedbackLabel>복잡도</FeedbackLabel>
-            <FeedbackText>O(n) 한 번 순회. 정렬 후 투 포인터보다 정리한 선택입니다.</FeedbackText>
+            <FeedbackText>{result.feedback.complexity}</FeedbackText>
           </FeedbackCard>
           <FeedbackCard $highlight>
             <FeedbackLabel>보완</FeedbackLabel>
-            <FeedbackText>짝을 찾지 못했을 때의 반환이 암묵적입니다. 명시하는 편이 안전합니다.</FeedbackText>
+            <FeedbackText>{result.feedback.improvement}</FeedbackText>
           </FeedbackCard>
         </FeedbackList>
 
