@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { FiSearch } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
-import type { Concept } from '../api'
+import type { Concept } from '../types'
 import NewConceptModal from '../components/NewConceptModal'
 import GaugeBar from '../components/GaugeBar'
 import { useConcepts } from '../hooks/useConcepts'
