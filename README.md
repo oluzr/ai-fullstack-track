@@ -37,7 +37,8 @@ backend/
 │   ├── schemas.py        # 요청/응답 Pydantic 모델
 │   └── routers/
 │       ├── concepts.py   # 등록/의미해석/목록/퀴즈/마스터
-│       └── notes.py      # 메모 작성/조회
+│       ├── notes.py      # 메모 작성/조회
+│       └── code.py       # 코드 문제 목록/제출/채점 (목업 화면 대응, LLM 리뷰)
 ├── agent/loop.py         # 에이전트 루프 (tool_calls 반복 호출) — /chat 데모용
 ├── llm/client.py         # LiteLLM 래퍼 (일반 completion + JSON 강제 completion)
 ├── tools/
@@ -45,10 +46,13 @@ backend/
 │   ├── quiz.py           # 퀴즈 생성 + 서술형 채점
 │   ├── gauge.py          # 이해도 게이지 갱신 규칙
 │   ├── notes.py          # 메모 언급 개념 추출 → 백링크 기록
+│   ├── code_review.py    # 제출 코드 LLM 리뷰 (실행 아님 — 읽고 판단)
 │   └── schemas.py        # 더미 echo 도구 (agent loop 배선 검증용)
 ├── db/
 │   ├── base.py           # SQLAlchemy 엔진/세션 (DATABASE_URL로 교체 가능)
-│   └── models.py         # Concept, QuizAttempt, Note, NoteLink
+│   ├── models.py         # Concept, QuizAttempt, Note, NoteLink, CodeProblem, CodeSubmission
+│   └── seed.py           # 코드 문제 시드 데이터 (기동 시 비어있으면 채움)
+├── tests/                 # pytest — LLM은 ScriptedLLM으로 스크립트 처리, 실호출 없음
 ├── rag/retriever.py       # RAG 인터페이스 자리만 마련 (미구현 스텁)
 ├── pyproject.toml / Dockerfile / .env.example
 
@@ -68,6 +72,39 @@ compose.yml       # 프로덕션: backend + frontend(nginx) 컨테이너
 compose.dev.yml   # 개발: 볼륨마운트 + 백엔드 --reload / 프론트 HMR
 ```
 
+## 시스템 구성
+
+컨테이너는 둘뿐이다(`frontend`, `backend`). 라우터·도구·LLM 클라이언트·DB 세션이
+전부 `backend` 프로세스 하나 안에 있고, 라우터가 도구에 SQLAlchemy `Session`을
+직접 넘겨준다 — 즉 "에이전트(도구)"가 DB를 몰라야 한다는 경계는 없고, 라우터가
+그 자리에서 도구를 호출하는 오케스트레이터 역할을 한다.
+
+```mermaid
+graph LR
+  B[브라우저] -->|HTTP| FE[frontend<br/>nginx · 정적 파일 + /api 프록시]
+
+  subgraph BACKEND["backend 컨테이너 — FastAPI 단일 프로세스"]
+    direction TB
+    R["app/routers<br/>concepts · notes · code"]
+    CHAT["/chat agent/loop.py<br/>echo 도구만 연결된 데모"]
+    T["tools/<br/>meanings · quiz · gauge · notes · code_review"]
+    L["llm/client.py<br/>LiteLLM 래퍼"]
+    R -->|Session 직접 전달| T
+    T --> L
+    CHAT --> L
+  end
+
+  FE -->|REST| R
+  FE -->|REST| CHAT
+  T -->|SQLAlchemy ORM| DB[("SQLite<br/>app.db")]
+  L -->|litellm| LLM["Gemini 등 LLM 프로바이더"]
+```
+
+`agent/loop.py`는 이름과 달리 지금은 `/chat` 데모용 껍데기다 — 실제 기능(의미
+해석, 퀴즈 생성/채점, 게이지 갱신, 메모 멘션 추출)은 전부 라우터가 도구 함수를
+직접 호출하는 방식으로 동작하고, 각 호출은 "LLM에게 구조화된 판단 한 번 요청"이지
+여러 스텝을 스스로 고르는 자율 루프가 아니다.
+
 ## API
 
 | Method | Path | 설명 | LLM 호출 |
@@ -80,6 +117,12 @@ compose.dev.yml   # 개발: 볼륨마운트 + 백엔드 --reload / 프론트 HMR
 | POST | `/concepts/{id}/master` | 마스터 처리 (소프트 삭제) | X |
 | POST | `/concepts/{id}/notes` | 메모 작성 → 언급 개념 자동 추출 | O |
 | GET | `/concepts/{id}/notes` | 메모 조회 (내 메모 + 백링크 메모) | X |
+| GET | `/code/problems` | 코드 문제 목록 (기동 시 시드 데이터) | X |
+| GET | `/code/problems/{id}` | 코드 문제 상세 | X |
+| POST | `/code/problems/{id}/submit` | 코드 제출 → LLM 리뷰(실행 아님) + 기록 | O |
+| GET | `/code/submissions` | 제출 이력 | X |
+
+각 엔드포인트가 실제로 어떤 순서로 LLM/DB를 타는지는 [API_FLOW.md](./API_FLOW.md) 참고.
 
 ## 실행 방법
 
