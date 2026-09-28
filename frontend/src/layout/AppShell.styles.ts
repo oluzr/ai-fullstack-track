@@ -10,6 +10,13 @@ export const Shell = styled.div<{ $chatOpen?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
+  /* RobotDock은 Frame 가장자리 밖으로 걸쳐 있어서, 채팅 패널이 열려 로봇이 오른쪽에
+     붙으면 뷰포트 오른쪽 끝과 거의 맞닿는다. 활동 중→idle로 돌아갈 때 RobotPop의
+     확대·이동이 0.55초 동안 풀리는 사이 idle 포즈(몸·머리·안테나를 기울이는 자세)가
+     즉시 먼저 적용되면서 잠깐 뷰포트 밖으로 삐져나가 가로 스크롤이 번쩍 생겼다.
+     로봇의 삐져나온 부분이 스크롤 영역을 늘리지 않도록 가로만 잘라낸다 — hidden과
+     달리 clip은 스크롤 컨테이너를 만들지 않아서 세로 방향 동작은 그대로다. */
+  overflow-x: clip;
 
   /* Frame의 실제 너비를 여기 한 곳에만 적어두고, Frame 자신과 RobotDock(형제라
      상속으로만 값을 받을 수 있음) 둘 다 이 변수를 읽게 한다. 예전엔 이 너비
