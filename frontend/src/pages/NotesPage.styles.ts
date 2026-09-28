@@ -77,3 +77,9 @@ export const NoteBody = styled.p`
   line-height: 1.7;
   color: ${(p) => p.theme.color.ink2};
 `
+
+export const NoteMetaRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`

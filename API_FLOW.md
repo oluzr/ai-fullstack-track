@@ -138,6 +138,16 @@ flowchart LR
   classDef db fill:#dcf0ec,stroke:#1f8a76,color:#0f5c4e;
 ```
 
+### `DELETE /notes/{id}` — 메모 삭제
+
+메모가 만든 백링크(`note_links`)도 함께 지운다. 없는 id면 404.
+
+```mermaid
+flowchart LR
+  Req(["요청"]) --> D1["메모 조회<br/>SELECT note"]:::db --> D2["삭제<br/>DELETE note, note_links"]:::db --> Res(["204"])
+  classDef db fill:#dcf0ec,stroke:#1f8a76,color:#0f5c4e;
+```
+
 ---
 
 ## Code 라우터 (`app/routers/code.py`)
@@ -234,6 +244,17 @@ flowchart LR
   classDef db fill:#dcf0ec,stroke:#1f8a76,color:#0f5c4e;
 ```
 
+### `DELETE /chat/sessions/{id}` — 대화 삭제
+
+대화 안의 메시지도 함께 지운다. 없는 id면 404 — 채팅 패널이 지워진 대화에
+이어 보내다 404를 받으면 새 대화로 다시 보낸다.
+
+```mermaid
+flowchart LR
+  Req(["요청"]) --> D1["대화 조회<br/>SELECT session"]:::db --> D2["삭제<br/>DELETE session, messages"]:::db --> Res(["204"])
+  classDef db fill:#dcf0ec,stroke:#1f8a76,color:#0f5c4e;
+```
+
 ### `GET /health`
 
 DB·LLM 없이 상태만 반환.
@@ -246,4 +267,4 @@ DB·LLM 없이 상태만 반환.
 |---|---|
 | 매 요청 LLM 호출 (5) | `/concepts/interpret`, `/concepts/{id}/explain`, `/concepts/{id}/notes`(POST), `/code/problems/{id}/submit`, `/chat` |
 | 조건부 LLM (2) | `/concepts/{id}/quiz`(mc만), `/concepts/{id}/quiz/answer`(free만) |
-| LLM 없이 DB·로직만 (11) | `/concepts`(POST/GET), `/concepts/{id}/master`, `/notes`, `/concepts/{id}/notes`(GET), `/code/problems`, `/code/problems/{id}`, `/code/submissions`, `/chat/sessions`, `/chat/sessions/{id}`, `/health` |
+| LLM 없이 DB·로직만 (13) | `/concepts`(POST/GET), `/concepts/{id}/master`, `/notes`, `/notes/{id}`(DELETE), `/concepts/{id}/notes`(GET), `/code/problems`, `/code/problems/{id}`, `/code/submissions`, `/chat/sessions`, `/chat/sessions/{id}`(GET/DELETE), `/health` |

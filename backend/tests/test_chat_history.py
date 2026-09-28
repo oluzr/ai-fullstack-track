@@ -105,3 +105,15 @@ def test_follow_up_message_sends_previous_turns_to_llm(client, scripted_llm):
         ("user", "이거 사전에 추가해줘"),
     ]
     assert sent[0]["role"] == "system"
+
+
+def test_delete_session_removes_it_and_its_messages(client, scripted_llm):
+    scripted_llm.script = [fake_response(content="ok")]
+    session_id = send(client, "안녕")[0]["session_id"]
+
+    res = client.delete(f"/chat/sessions/{session_id}")
+
+    assert res.status_code == 204
+    assert client.get("/chat/sessions").json() == []
+    assert client.get(f"/chat/sessions/{session_id}").status_code == 404
+    assert client.delete(f"/chat/sessions/{session_id}").status_code == 404

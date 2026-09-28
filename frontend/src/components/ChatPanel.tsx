@@ -126,7 +126,19 @@ export default function ChatPanel({ onClose }: { onClose: () => void }) {
     abortRef.current = controller
 
     try {
-      await streamChat(text, sessionIdRef.current, handleEvent, controller.signal)
+      try {
+        await streamChat(text, sessionIdRef.current, handleEvent, controller.signal)
+      } catch (err) {
+        // 패널을 연 채로 채팅 내역 페이지에서 지금 대화를 지우면 서버가 404를 준다.
+        // 그땐 이어 붙일 대화가 없으니 새 대화로 다시 보낸다.
+        const sessionGone =
+          sessionIdRef.current !== null &&
+          err instanceof Error &&
+          err.message.includes('chat session not found')
+        if (!sessionGone) throw err
+        sessionIdRef.current = null
+        await streamChat(text, null, handleEvent, controller.signal)
+      }
     } catch (err) {
       if (controller.signal.aborted) return
       setSteps([])

@@ -68,6 +68,13 @@ export const SessionMeta = styled.span`
 `
 
 // 상세 페이지
+export const TopBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 760px;
+`
+
 export const BackLink = styled.button`
   display: inline-flex;
   align-items: center;
@@ -79,6 +86,23 @@ export const BackLink = styled.button`
   font-size: 13.5px;
   cursor: pointer;
   padding: 0;
+`
+
+export const DeleteLink = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  border: none;
+  color: ${(p) => p.theme.color.ink3};
+  font-size: 13.5px;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+
+  &:hover {
+    color: ${(p) => p.theme.color.error};
+  }
 `
 
 export const Conversation = styled.div`

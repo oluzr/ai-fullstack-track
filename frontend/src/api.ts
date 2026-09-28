@@ -30,6 +30,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     const text = await res.text()
     throw new Error(text || `요청 실패: ${res.status}`)
   }
+  // 삭제 API는 204(본문 없음)로 응답해서 json()을 부르면 파싱 에러가 난다.
+  if (res.status === 204) return undefined as T
   return res.json()
 }
 
@@ -76,6 +78,8 @@ export const api = {
       body: JSON.stringify({ body }),
     }),
 
+  deleteNote: (noteId: number) => request<void>(`/notes/${noteId}`, { method: 'DELETE' }),
+
   listCodeProblems: () => request<CodeProblemSummary[]>('/code/problems'),
 
   getCodeProblem: (problemId: number) => request<CodeProblem>(`/code/problems/${problemId}`),
@@ -91,6 +95,9 @@ export const api = {
   listChatSessions: () => request<ChatSessionSummary[]>('/chat/sessions'),
 
   getChatSession: (sessionId: number) => request<ChatSession>(`/chat/sessions/${sessionId}`),
+
+  deleteChatSession: (sessionId: number) =>
+    request<void>(`/chat/sessions/${sessionId}`, { method: 'DELETE' }),
 }
 
 // /chat은 결과를 한 번에 주지 않고, 줄마다 하나씩 JSON 이벤트(NDJSON)를 흘려준다

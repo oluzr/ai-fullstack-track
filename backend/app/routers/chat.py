@@ -1,6 +1,6 @@
 import json
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import StreamingResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -95,3 +95,14 @@ def get_chat_session(session_id: int, db: Session = Depends(get_db)):
     if not session:
         raise HTTPException(status_code=404, detail="chat session not found")
     return session
+
+
+@router.delete("/chat/sessions/{session_id}", status_code=204)
+def delete_chat_session(session_id: int, db: Session = Depends(get_db)):
+    """대화와 그 안의 메시지를 함께 지운다 — cascade는 ChatSession.messages 참고."""
+    session = db.get(ChatSession, session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="chat session not found")
+    db.delete(session)
+    db.commit()
+    return Response(status_code=204)
