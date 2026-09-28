@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { FiSend } from 'react-icons/fi'
 import { streamChat } from '../api'
 import { flashAiPhase, useAiActivityStore } from '../store/useAiActivityStore'
 import { ErrorText, Muted } from '../styles/shared'
 import type { ChatActivityStep, ChatMessage, ChatStreamEvent } from '../types'
+import ChatMessageBubble, { AVATAR_SRC } from './ChatMessageBubble'
 import ThinkingDots from './ThinkingDots'
 import {
   ActivityBubble,
   Avatar,
-  Bubble,
   ChatTextarea,
   CloseButton,
   EmptyAvatar,
@@ -26,10 +27,15 @@ import {
   Title,
 } from './ChatPanel.styles'
 
-const AVATAR_SRC = '/favicon.png'
+// 도구 이름(백엔드 tools/schemas.py) → 진행 표시에 쓸 사람이 읽는 이름.
+const TOOL_LABELS: Record<string, { active: string; done: string }> = {
+  add_concept: { active: '사전에 등록하는 중', done: '사전에 등록함' },
+}
 
 function stepLabel(step: ChatActivityStep) {
   if (step.kind === 'thinking') return step.status === 'active' ? '생각하는 중' : '생각함'
+  const label = step.toolName ? TOOL_LABELS[step.toolName] : undefined
+  if (label) return step.status === 'active' ? label.active : label.done
   const verb = step.status === 'active' ? '호출 중' : '호출 완료'
   return `${step.toolName} 도구 ${verb}`
 }
@@ -42,6 +48,10 @@ export default function ChatPanel({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState<string | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
+  // 패널을 연 동안 주고받은 메시지는 서버에서 한 대화로 묶인다. 첫 응답의 session
+  // 이벤트로 받은 id를 들고 있다가 이후 메시지에 실어 보낸다.
+  const sessionIdRef = useRef<number | null>(null)
+  const queryClient = useQueryClient()
 
   // 패널이 닫히면(언마운트) 진행 중이던 스트림 읽기를 끊는다 — 백그라운드에서
   // 계속 읽어봤자 반영할 화면이 없다.
@@ -52,6 +62,11 @@ export default function ChatPanel({ onClose }: { onClose: () => void }) {
   }, [messages, steps])
 
   function handleEvent(event: ChatStreamEvent) {
+    if (event.type === 'session') {
+      sessionIdRef.current = event.session_id
+      return
+    }
+
     if (event.type === 'thinking') {
       useAiActivityStore.getState().setPhase('thinking')
       setSteps((prev) => [
@@ -71,6 +86,10 @@ export default function ChatPanel({ onClose }: { onClose: () => void }) {
     }
 
     if (event.type === 'tool_result') {
+      // 채팅에서 사전에 새 개념이 들어가면 사이드바 개수·사전 목록이 바로 반영되게 한다.
+      if (event.name === 'add_concept') {
+        queryClient.invalidateQueries({ queryKey: ['concepts'] })
+      }
       setSteps((prev) =>
         prev.map((s) =>
           s.kind === 'tool' && s.toolName === event.name && s.status === 'active'
@@ -107,7 +126,7 @@ export default function ChatPanel({ onClose }: { onClose: () => void }) {
     abortRef.current = controller
 
     try {
-      await streamChat(text, handleEvent, controller.signal)
+      await streamChat(text, sessionIdRef.current, handleEvent, controller.signal)
     } catch (err) {
       if (controller.signal.aborted) return
       setSteps([])
@@ -118,6 +137,10 @@ export default function ChatPanel({ onClose }: { onClose: () => void }) {
       // 뒤이므로 setState를 건드리지 않는다 — abortRef만 정리한다.
       if (!controller.signal.aborted) setIsSending(false)
       abortRef.current = null
+      queryClient.invalidateQueries({ queryKey: ['chat-sessions'] })
+      if (sessionIdRef.current !== null) {
+        queryClient.invalidateQueries({ queryKey: ['chat-session', sessionIdRef.current] })
+      }
     }
   }
 
@@ -148,10 +171,7 @@ export default function ChatPanel({ onClose }: { onClose: () => void }) {
         )}
 
         {messages.map((message) => (
-          <Row key={message.id} $role={message.role}>
-            {message.role === 'assistant' && <Avatar src={AVATAR_SRC} alt="AI" />}
-            <Bubble $role={message.role}>{message.text}</Bubble>
-          </Row>
+          <ChatMessageBubble key={message.id} role={message.role} text={message.text} />
         ))}
 
         {steps.length > 0 && (

@@ -19,9 +19,26 @@ from tools.schemas import DISPATCH, TOOLS
 
 MAX_ITERATIONS = 5
 
+SYSTEM_PROMPT = (
+    "너는 사용자가 개념을 익히도록 돕는 학습 도우미다. 사용자는 모르는 단어를 "
+    "'개념 사전'에 등록해 두고 퀴즈로 복습한다. 답변은 한국어로, 필요하면 마크다운을 "
+    "써서 간결하게 한다. 사용자가 사전에 추가해 달라고 명시적으로 요청할 때만 "
+    "add_concept 도구를 호출하고, 등록 결과를 짧게 알려준다."
+)
 
-def stream_agent(user_message: str) -> Iterator[dict[str, Any]]:
-    messages: list[dict] = [{"role": "user", "content": user_message}]
+
+def stream_agent(
+    user_message: str, history: list[dict] | None = None
+) -> Iterator[dict[str, Any]]:
+    """history는 이번 메시지 이전의 대화({"role", "content"} 목록, 오래된 순)다.
+
+    질문을 맨 끝에 두는 건 모델이 긴 컨텍스트의 끝을 더 잘 보기 때문이기도 하다.
+    """
+    messages: list[dict] = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        *(history or []),
+        {"role": "user", "content": user_message},
+    ]
 
     for _ in range(MAX_ITERATIONS):
         yield {"type": "thinking"}
@@ -47,7 +64,9 @@ def stream_agent(user_message: str) -> Iterator[dict[str, Any]]:
                 {
                     "role": "tool",
                     "tool_call_id": call.id,
-                    "content": str(result),
+                    "content": result
+                    if isinstance(result, str)
+                    else json.dumps(result, ensure_ascii=False),
                 }
             )
 

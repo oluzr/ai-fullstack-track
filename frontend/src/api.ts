@@ -11,6 +11,8 @@ import type {
   CodeSubmitResult,
   CodeSubmission,
   ChatStreamEvent,
+  ChatSessionSummary,
+  ChatSession,
 } from './types'
 
 // dev: vite가 /api/* 를 backend로 리버스 프록시(prefix 제거)
@@ -85,21 +87,27 @@ export const api = {
     }),
 
   listCodeSubmissions: () => request<CodeSubmission[]>('/code/submissions'),
+
+  listChatSessions: () => request<ChatSessionSummary[]>('/chat/sessions'),
+
+  getChatSession: (sessionId: number) => request<ChatSession>(`/chat/sessions/${sessionId}`),
 }
 
 // /chat은 결과를 한 번에 주지 않고, 줄마다 하나씩 JSON 이벤트(NDJSON)를 흘려준다
 // (thinking → tool_call/tool_result 0회 이상 반복 → content). fetch로 직접 열어
 // 응답 바디를 스트림으로 읽는 이유는, EventSource가 GET만 지원해서 POST 바디로
 // 메시지를 보내야 하는 이 요청엔 못 쓰기 때문이다.
+// sessionId가 없으면 서버가 새 대화를 만들고, 첫 이벤트(session)로 그 id를 알려준다.
 export async function streamChat(
   message: string,
+  sessionId: number | null,
   onEvent: (event: ChatStreamEvent) => void,
   signal?: AbortSignal,
 ): Promise<void> {
   const res = await fetch(`${API_BASE}/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message, session_id: sessionId }),
     signal,
   })
   if (!res.ok || !res.body) {

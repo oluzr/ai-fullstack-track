@@ -72,6 +72,11 @@ export default function AppShell() {
               <NavItem to="/code/submissions">제출 기록</NavItem>
             </NavGroup>
 
+            <NavGroup>
+              <NavGroupLabel>AI 채팅</NavGroupLabel>
+              <NavItem to="/chats">채팅 내역</NavItem>
+            </NavGroup>
+
             <Footer>
               <Divider />
               <ThemeToggle onClick={toggleTheme}>

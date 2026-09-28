@@ -3,7 +3,8 @@ import { glass, thinScrollbar } from "../styles/shared";
 
 export const Panel = styled.aside`
   position: relative;
-  width: 400px;
+  min-width: 400px;
+  width:32vw;
   flex: none;
   height: 100%;
   display: flex;
@@ -132,6 +133,113 @@ export const Bubble = styled.div<{ $role: "user" | "assistant" }>`
 
   @media (prefers-reduced-motion: reduce) {
     animation: ${fadeOnly} 0.15s ease both;
+  }
+`;
+
+// 어시스턴트 답변(마크다운) 본문. Bubble의 pre-wrap을 그대로 두면 블록 요소 사이의
+// 개행까지 공백으로 찍혀 간격이 벌어지므로 여기서 normal로 되돌린다.
+export const Markdown = styled.div`
+  white-space: normal;
+
+  & > :first-child {
+    margin-top: 0;
+  }
+  & > :last-child {
+    margin-bottom: 0;
+  }
+
+  p,
+  ul,
+  ol,
+  pre,
+  blockquote,
+  table {
+    margin: 0 0 8px;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    margin: 12px 0 6px;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+  h1 {
+    font-size: 17px;
+  }
+  h2 {
+    font-size: 16px;
+  }
+  h3,
+  h4 {
+    font-size: 15px;
+  }
+
+  ul,
+  ol {
+    padding-left: 20px;
+  }
+  li + li {
+    margin-top: 2px;
+  }
+
+  a {
+    color: ${(p) => p.theme.color.acc};
+    text-decoration: underline;
+  }
+
+  code {
+    font-family: ${(p) => p.theme.font.mono};
+    font-size: 12.5px;
+    padding: 1px 5px;
+    border-radius: 5px;
+    background: ${(p) =>
+      p.theme.name === "light" ? "rgba(15,23,42,0.07)" : "#ffffff1a"};
+  }
+
+  pre {
+    padding: 10px 12px;
+    border-radius: ${(p) => p.theme.radius.sm};
+    background: ${(p) => p.theme.surface.code};
+    color: #e6edf3;
+    overflow-x: auto;
+    white-space: pre;
+    ${thinScrollbar}
+
+    code {
+      padding: 0;
+      background: none;
+      color: inherit;
+    }
+  }
+
+  blockquote {
+    padding-left: 10px;
+    border-left: 3px solid ${(p) => p.theme.border.fieldbd};
+    color: ${(p) => p.theme.color.ink3};
+  }
+
+  hr {
+    margin: 10px 0;
+    border: none;
+    border-top: 1px solid ${(p) => p.theme.border.line};
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th,
+  td {
+    padding: 5px 8px;
+    border: 1px solid ${(p) => p.theme.border.line};
+    text-align: left;
+  }
+  th {
+    font-weight: 700;
   }
 `;
 

@@ -101,3 +101,32 @@ class CodeSubmission(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
     problem: Mapped["CodeProblem"] = relationship(back_populates="submissions")
+
+
+class ChatSession(Base):
+    """채팅 패널을 한 번 열어 나눈 대화 묶음. title은 첫 사용자 메시지에서 따온다."""
+
+    __tablename__ = "chat_sessions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    messages: Mapped[list["ChatMessage"]] = relationship(
+        back_populates="session",
+        cascade="all, delete-orphan",
+        order_by="ChatMessage.id",
+    )
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    session_id: Mapped[int] = mapped_column(ForeignKey("chat_sessions.id"), nullable=False)
+    role: Mapped[str] = mapped_column(String, nullable=False)  # user | assistant
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    session: Mapped["ChatSession"] = relationship(back_populates="messages")
