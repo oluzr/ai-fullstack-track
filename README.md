@@ -38,7 +38,6 @@ backend/
 │   └── routers/
 │       ├── concepts.py   # 등록/의미해석/목록/퀴즈/마스터
 │       ├── notes.py      # 메모 작성/조회
-│       ├── code.py       # 코드 문제 목록/제출/채점 (목업 화면 대응, LLM 리뷰)
 │       └── chat.py       # /chat 스트리밍 + 채팅 내역 저장/조회
 ├── agent/
 │   ├── loop.py           # 에이전트 루프 (tool_calls 반복 호출) — /chat
@@ -50,12 +49,10 @@ backend/
 │   ├── gauge.py          # 이해도 게이지 갱신 규칙
 │   ├── notes.py          # 메모 언급 개념 추출 → 백링크 기록
 │   ├── dictionary.py     # 채팅 에이전트용 개념 사전 등록 도구 (add_concept)
-│   ├── code_review.py    # 제출 코드 LLM 리뷰 (실행 아님 — 읽고 판단)
 │   └── schemas.py        # 더미 echo 도구 (agent loop 배선 검증용)
 ├── db/
 │   ├── base.py           # SQLAlchemy 엔진/세션 (DATABASE_URL로 교체 가능)
-│   ├── models.py         # Concept, QuizAttempt, Note, NoteLink, CodeProblem, CodeSubmission
-│   └── seed.py           # 코드 문제 시드 데이터 (기동 시 비어있으면 채움)
+│   └── models.py         # Concept, QuizAttempt, Note, NoteLink, ChatSession, ChatMessage
 ├── tests/                 # pytest — LLM은 ScriptedLLM으로 스크립트 처리, 실호출 없음
 ├── rag/retriever.py       # RAG 인터페이스 자리만 마련 (미구현 스텁)
 ├── pyproject.toml / Dockerfile / .env.example
@@ -89,9 +86,9 @@ graph LR
 
   subgraph BACKEND["backend 컨테이너 — FastAPI 단일 프로세스"]
     direction TB
-    R["app/routers<br/>concepts · notes · code"]
+    R["app/routers<br/>concepts · notes"]
     CHAT["/chat agent/loop.py<br/>add_concept 도구 연결"]
-    T["tools/<br/>meanings · quiz · gauge · notes · code_review"]
+    T["tools/<br/>meanings · quiz · gauge · notes"]
     L["llm/client.py<br/>LiteLLM 래퍼"]
     R -->|Session 직접 전달| T
     T --> L
@@ -122,10 +119,6 @@ graph LR
 | POST | `/concepts/{id}/master` | 마스터 처리 (소프트 삭제) | X |
 | POST | `/concepts/{id}/notes` | 메모 작성 → 언급 개념 자동 추출 | O |
 | GET | `/concepts/{id}/notes` | 메모 조회 (내 메모 + 백링크 메모) | X |
-| GET | `/code/problems` | 코드 문제 목록 (기동 시 시드 데이터) | X |
-| GET | `/code/problems/{id}` | 코드 문제 상세 | X |
-| POST | `/code/problems/{id}/submit` | 코드 제출 → LLM 리뷰(실행 아님) + 기록 | O |
-| GET | `/code/submissions` | 제출 이력 | X |
 
 각 엔드포인트가 실제로 어떤 순서로 LLM/DB를 타는지는 [API_FLOW.md](./API_FLOW.md) 참고.
 

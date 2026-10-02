@@ -2,10 +2,6 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import AppShell from './layout/AppShell'
 import ChatHistoryDetailPage from './pages/ChatHistoryDetailPage'
 import ChatHistoryPage from './pages/ChatHistoryPage'
-import CodeReadPage from './pages/CodeReadPage'
-import CodeResultPage from './pages/CodeResultPage'
-import CodeSolvePage from './pages/CodeSolvePage'
-import CodeSubmissionsPage from './pages/CodeSubmissionsPage'
 import ComingSoonPage from './pages/ComingSoonPage'
 import ConceptDetailPage from './pages/ConceptDetailPage'
 import ConceptsPage from './pages/ConceptsPage'
@@ -23,11 +19,6 @@ function App() {
           <Route path="concepts/review" element={<ComingSoonPage title="오늘 복습" />} />
           <Route path="concepts/notes" element={<NotesPage />} />
           <Route path="concepts/:id" element={<ConceptDetailPage />} />
-          <Route path="code/read" element={<CodeReadPage />} />
-          <Route path="code/solve" element={<CodeSolvePage />} />
-          <Route path="code/result" element={<CodeResultPage />} />
-          <Route path="code/progress" element={<ComingSoonPage title="학습 현황" />} />
-          <Route path="code/submissions" element={<CodeSubmissionsPage />} />
           <Route path="chats" element={<ChatHistoryPage />} />
           <Route path="chats/:id" element={<ChatHistoryDetailPage />} />
           <Route path="settings" element={<SettingsPage />} />

@@ -6,10 +6,6 @@ import type {
   Quiz,
   QuizAnswerResult,
   Note,
-  CodeProblemSummary,
-  CodeProblem,
-  CodeSubmitResult,
-  CodeSubmission,
   ChatStreamEvent,
   ChatSessionSummary,
   ChatSession,
@@ -79,18 +75,6 @@ export const api = {
     }),
 
   deleteNote: (noteId: number) => request<void>(`/notes/${noteId}`, { method: 'DELETE' }),
-
-  listCodeProblems: () => request<CodeProblemSummary[]>('/code/problems'),
-
-  getCodeProblem: (problemId: number) => request<CodeProblem>(`/code/problems/${problemId}`),
-
-  submitCode: (problemId: number, language: string, code: string) =>
-    request<CodeSubmitResult>(`/code/problems/${problemId}/submit`, {
-      method: 'POST',
-      body: JSON.stringify({ language, code }),
-    }),
-
-  listCodeSubmissions: () => request<CodeSubmission[]>('/code/submissions'),
 
   listChatSessions: () => request<ChatSessionSummary[]>('/chat/sessions'),
 

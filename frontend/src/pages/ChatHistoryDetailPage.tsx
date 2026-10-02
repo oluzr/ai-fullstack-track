@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { FiArrowLeft, FiTrash2 } from 'react-icons/fi'
+import { FiArrowLeft, FiMessageCircle, FiTrash2 } from 'react-icons/fi'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api'
 import ChatMessageBubble from '../components/ChatMessageBubble'
 import ConfirmDialog from '../components/ConfirmDialog'
+import { useChatStore } from '../store/useChatStore'
 import { ErrorText, Muted } from '../styles/shared'
 import { formatDateTime } from './ChatHistoryPage'
 import {
@@ -14,6 +15,7 @@ import {
   Subtitle,
   BackLink,
   DeleteLink,
+  TopBarActions,
   TopBar,
   Conversation,
 } from './ChatHistoryPage.styles'
@@ -27,6 +29,7 @@ export default function ChatHistoryDetailPage() {
     enabled: Number.isFinite(sessionId),
   })
 
+  const continueSession = useChatStore((s) => s.continueSession)
   const queryClient = useQueryClient()
   const [confirmOpen, setConfirmOpen] = useState(false)
   const deleteSession = useMutation({
@@ -45,9 +48,14 @@ export default function ChatHistoryDetailPage() {
           <FiArrowLeft /> 목록으로
         </BackLink>
         {session && (
-          <DeleteLink onClick={() => setConfirmOpen(true)}>
-            <FiTrash2 /> 삭제
-          </DeleteLink>
+          <TopBarActions>
+            <BackLink onClick={() => continueSession(session.id)}>
+              <FiMessageCircle /> 이어서 대화하기
+            </BackLink>
+            <DeleteLink onClick={() => setConfirmOpen(true)}>
+              <FiTrash2 /> 삭제
+            </DeleteLink>
+          </TopBarActions>
         )}
       </TopBar>
 
