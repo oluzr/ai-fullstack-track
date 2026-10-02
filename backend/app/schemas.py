@@ -120,3 +120,35 @@ class CodeSubmissionOut(BaseModel):
     score: int
     feedback: CodeFeedback
     created_at: datetime
+
+
+class ChatRequest(BaseModel):
+    message: str
+    session_id: Optional[int] = None
+
+
+class ChatMessageOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    role: Literal["user", "assistant"]
+    text: str
+    created_at: datetime
+
+
+class ChatSessionListOut(BaseModel):
+    id: int
+    title: str
+    message_count: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class ChatSessionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    created_at: datetime
+    updated_at: datetime
+    messages: list[ChatMessageOut]

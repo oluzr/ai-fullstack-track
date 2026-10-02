@@ -1,6 +1,6 @@
 """agent/loop.py — tool-calling 루프의 종료 조건 검증. 실제 LLM 호출 없음."""
 
-from agent.loop import run_agent
+from agent.loop import run_agent, stream_agent
 from tests.conftest import fake_response, fake_tool_call
 
 
@@ -37,3 +37,32 @@ def test_stops_after_max_iterations(scripted_llm):
 
     assert result == "최대 반복 횟수에 도달했습니다."
     assert len(scripted_llm.calls) == 5
+
+
+def test_stream_emits_thinking_then_content_when_no_tool_calls(scripted_llm):
+    scripted_llm.script = [fake_response(content="안녕하세요")]
+
+    events = list(stream_agent("안녕"))
+
+    assert events == [
+        {"type": "thinking"},
+        {"type": "content", "text": "안녕하세요"},
+    ]
+
+
+def test_stream_emits_tool_call_and_result_before_next_thinking(scripted_llm):
+    call = fake_tool_call("echo", '{"text": "hi"}')
+    scripted_llm.script = [
+        fake_response(tool_calls=[call]),
+        fake_response(content="다 됐습니다"),
+    ]
+
+    events = list(stream_agent("echo 해줘"))
+
+    assert events == [
+        {"type": "thinking"},
+        {"type": "tool_call", "name": "echo", "args": {"text": "hi"}},
+        {"type": "tool_result", "name": "echo", "result": "hi"},
+        {"type": "thinking"},
+        {"type": "content", "text": "다 됐습니다"},
+    ]

@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import type { CodeSubmitResult } from '../api'
+import type { CodeSubmitResult } from '../types'
 import { Button } from '../styles/shared'
 import {
   Page,

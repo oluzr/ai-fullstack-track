@@ -38,14 +38,18 @@ backend/
 │   └── routers/
 │       ├── concepts.py   # 등록/의미해석/목록/퀴즈/마스터
 │       ├── notes.py      # 메모 작성/조회
-│       └── code.py       # 코드 문제 목록/제출/채점 (목업 화면 대응, LLM 리뷰)
-├── agent/loop.py         # 에이전트 루프 (tool_calls 반복 호출) — /chat 데모용
+│       ├── code.py       # 코드 문제 목록/제출/채점 (목업 화면 대응, LLM 리뷰)
+│       └── chat.py       # /chat 스트리밍 + 채팅 내역 저장/조회
+├── agent/
+│   ├── loop.py           # 에이전트 루프 (tool_calls 반복 호출) — /chat
+│   └── context.py        # 이전 대화를 토큰 예산 안에서 골라 조립
 ├── llm/client.py         # LiteLLM 래퍼 (일반 completion + JSON 강제 completion)
 ├── tools/
 │   ├── meanings.py       # 등록 전 의미 해석 (동음이의어 판별)
 │   ├── quiz.py           # 퀴즈 생성 + 서술형 채점
 │   ├── gauge.py          # 이해도 게이지 갱신 규칙
 │   ├── notes.py          # 메모 언급 개념 추출 → 백링크 기록
+│   ├── dictionary.py     # 채팅 에이전트용 개념 사전 등록 도구 (add_concept)
 │   ├── code_review.py    # 제출 코드 LLM 리뷰 (실행 아님 — 읽고 판단)
 │   └── schemas.py        # 더미 echo 도구 (agent loop 배선 검증용)
 ├── db/
@@ -86,7 +90,7 @@ graph LR
   subgraph BACKEND["backend 컨테이너 — FastAPI 단일 프로세스"]
     direction TB
     R["app/routers<br/>concepts · notes · code"]
-    CHAT["/chat agent/loop.py<br/>echo 도구만 연결된 데모"]
+    CHAT["/chat agent/loop.py<br/>add_concept 도구 연결"]
     T["tools/<br/>meanings · quiz · gauge · notes · code_review"]
     L["llm/client.py<br/>LiteLLM 래퍼"]
     R -->|Session 직접 전달| T
@@ -100,7 +104,8 @@ graph LR
   L -->|litellm| LLM["Gemini 등 LLM 프로바이더"]
 ```
 
-`agent/loop.py`는 이름과 달리 지금은 `/chat` 데모용 껍데기다 — 실제 기능(의미
+`agent/loop.py`는 `/chat` 채팅에만 쓰인다 — 대화 중 "사전에 추가해줘"를 받으면
+`add_concept` 도구를 스스로 골라 호출한다. 그 밖의 기능(의미
 해석, 퀴즈 생성/채점, 게이지 갱신, 메모 멘션 추출)은 전부 라우터가 도구 함수를
 직접 호출하는 방식으로 동작하고, 각 호출은 "LLM에게 구조화된 판단 한 번 요청"이지
 여러 스텝을 스스로 고르는 자율 루프가 아니다.

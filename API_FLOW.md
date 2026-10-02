@@ -138,6 +138,16 @@ flowchart LR
   classDef db fill:#dcf0ec,stroke:#1f8a76,color:#0f5c4e;
 ```
 
+### `DELETE /notes/{id}` — 메모 삭제
+
+메모가 만든 백링크(`note_links`)도 함께 지운다. 없는 id면 404.
+
+```mermaid
+flowchart LR
+  Req(["요청"]) --> D1["메모 조회<br/>SELECT note"]:::db --> D2["삭제<br/>DELETE note, note_links"]:::db --> Res(["204"])
+  classDef db fill:#dcf0ec,stroke:#1f8a76,color:#0f5c4e;
+```
+
 ---
 
 ## Code 라우터 (`app/routers/code.py`)
@@ -184,25 +194,66 @@ flowchart LR
 
 ---
 
-## Chat / Agent (`app/main.py`, `agent/loop.py`)
+## Chat / Agent (`app/routers/chat.py`, `agent/loop.py`)
 
 ### `POST /chat` — tool-calling 에이전트 루프
 
 다른 엔드포인트와 모양이 다르다 — 단발 호출이 아니라 `tool_calls`가 없어질
-때까지 LLM을 최대 5회 반복 호출하는 루프. 지금 등록된 도구는 검증용 더미
-`echo` 하나뿐 (`tools/schemas.py`의 `TOOLS`/`DISPATCH`).
+때까지 LLM을 최대 5회 반복 호출하는 루프. 등록된 도구는 검증용 더미 `echo`와
+개념 사전 등록 `add_concept` (`tools/schemas.py`의 `TOOLS`/`DISPATCH`). 사용자가
+"이거 사전에 추가해줘"라고 하면 LLM이 앞 대화의 설명을 한두 문장으로 줄여
+`add_concept(term, definition)`을 호출한다 — 같은 term이 있으면 `exists`를 돌려준다.
+
+`session_id`가 없으면 새 대화(`chat_sessions`)를 만들고, 있으면 그 대화에
+이어 붙인다(없는 id면 404). 사용자 메시지는 스트림 시작 전에, 최종 답변은
+`content` 이벤트 시점에 `chat_messages`로 저장된다. 스트림 첫 줄은 대화 id를
+알려주는 `session` 이벤트다. 같은 대화의 이전 메시지는 `agent/context.py`가
+토큰 예산(`HISTORY_TOKEN_BUDGET`, `litellm.token_counter`로 측정) 안에서 최근
+턴부터 골라 시스템 프롬프트와 이번 질문 사이에 넣는다 — 예산을 넘는 오래된
+턴은 버린다(잘라내기, LLM 추가 호출 없음). 도구 호출 과정은 저장하지 않으므로
+기록에는 사용자 질문과 최종 답변만 남는다.
 
 ```mermaid
 flowchart LR
-  Req(["요청"]) --> L["LLM 호출<br/>complete(tools)"]:::llm --> D{"tool_calls 있음?"}
-  D -- 없음 --> Res(["응답 텍스트"])
+  Req(["요청"]) --> S["대화 생성·조회 + 질문 저장<br/>INSERT session, message"]:::db --> H["최근 대화 조립<br/>토큰 예산 안에서"]:::muted --> L["LLM 호출<br/>complete(tools)"]:::llm --> D{"tool_calls 있음?"}
+  D -- 없음 --> W["답변 저장<br/>INSERT message"]:::db --> Res(["응답 텍스트"])
   D -- 있음 --> T["도구 실행<br/>DISPATCH[name]()"]:::muted
   T -->|"결과를 메시지에 추가<br/>재호출 (최대 5회)"| L
+  classDef db fill:#dcf0ec,stroke:#1f8a76,color:#0f5c4e;
   classDef llm fill:#fbeed9,stroke:#c8842c,color:#8a5613;
   classDef muted fill:#f2f4f7,stroke:#c4cbd3,color:#5b6270;
 ```
 
 5회를 다 돌면 `"최대 반복 횟수에 도달했습니다"` 라는 고정 문구를 반환한다.
+
+### `GET /chat/sessions` — 채팅 내역 목록
+
+최근 활동(`updated_at`) 순. 대화별 메시지 수를 함께 준다.
+
+```mermaid
+flowchart LR
+  Req(["요청"]) --> D1["목록 조회<br/>SELECT sessions + COUNT messages"]:::db --> Res(["응답"])
+  classDef db fill:#dcf0ec,stroke:#1f8a76,color:#0f5c4e;
+```
+
+### `GET /chat/sessions/{id}` — 대화 상세
+
+```mermaid
+flowchart LR
+  Req(["요청"]) --> D1["대화·메시지 조회<br/>SELECT session, messages"]:::db --> Res(["응답"])
+  classDef db fill:#dcf0ec,stroke:#1f8a76,color:#0f5c4e;
+```
+
+### `DELETE /chat/sessions/{id}` — 대화 삭제
+
+대화 안의 메시지도 함께 지운다. 없는 id면 404 — 채팅 패널이 지워진 대화에
+이어 보내다 404를 받으면 새 대화로 다시 보낸다.
+
+```mermaid
+flowchart LR
+  Req(["요청"]) --> D1["대화 조회<br/>SELECT session"]:::db --> D2["삭제<br/>DELETE session, messages"]:::db --> Res(["204"])
+  classDef db fill:#dcf0ec,stroke:#1f8a76,color:#0f5c4e;
+```
 
 ### `GET /health`
 
@@ -216,4 +267,4 @@ DB·LLM 없이 상태만 반환.
 |---|---|
 | 매 요청 LLM 호출 (5) | `/concepts/interpret`, `/concepts/{id}/explain`, `/concepts/{id}/notes`(POST), `/code/problems/{id}/submit`, `/chat` |
 | 조건부 LLM (2) | `/concepts/{id}/quiz`(mc만), `/concepts/{id}/quiz/answer`(free만) |
-| LLM 없이 DB·로직만 (9) | `/concepts`(POST/GET), `/concepts/{id}/master`, `/notes`, `/concepts/{id}/notes`(GET), `/code/problems`, `/code/problems/{id}`, `/code/submissions`, `/health` |
+| LLM 없이 DB·로직만 (13) | `/concepts`(POST/GET), `/concepts/{id}/master`, `/notes`, `/notes/{id}`(DELETE), `/concepts/{id}/notes`(GET), `/code/problems`, `/code/problems/{id}`, `/code/submissions`, `/chat/sessions`, `/chat/sessions/{id}`(GET/DELETE), `/health` |

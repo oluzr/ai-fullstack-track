@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from app.schemas import NoteCreate, NoteOut
@@ -92,3 +92,14 @@ def list_notes(concept_id: int, db: Session = Depends(get_db)):
     ]
 
     return own_out + backlink_out
+
+
+@router.delete("/notes/{note_id}", status_code=204)
+def delete_note(note_id: int, db: Session = Depends(get_db)):
+    """메모와 그 메모가 만든 백링크(note_links)를 함께 지운다 — cascade는 Note.links 참고."""
+    note = db.get(Note, note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="note not found")
+    db.delete(note)
+    db.commit()
+    return Response(status_code=204)

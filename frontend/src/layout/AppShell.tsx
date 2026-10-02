@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { FiMoon, FiSun } from 'react-icons/fi'
+import ChatPanel from '../components/ChatPanel'
 import { useConcepts } from '../hooks/useConcepts'
 import { useAiActivityStore } from '../store/useAiActivityStore'
 import { useThemeStore } from '../store/useThemeStore'
@@ -34,9 +36,10 @@ export default function AppShell() {
   const toggleTheme = useThemeStore((s) => s.toggleTheme)
   const aiPhase = useAiActivityStore((s) => s.phase)
   const aiActive = aiPhase !== 'idle'
+  const [isChatOpen, setIsChatOpen] = useState(false)
 
   return (
-    <Shell>
+    <Shell $chatOpen={isChatOpen}>
       <Frame>
         <Glow />
         <Inner>
@@ -69,6 +72,11 @@ export default function AppShell() {
               <NavItem to="/code/submissions">제출 기록</NavItem>
             </NavGroup>
 
+            <NavGroup>
+              <NavGroupLabel>AI 채팅</NavGroupLabel>
+              <NavItem to="/chats">채팅 내역</NavItem>
+            </NavGroup>
+
             <Footer>
               <Divider />
               <ThemeToggle onClick={toggleTheme}>
@@ -83,12 +91,15 @@ export default function AppShell() {
             <Outlet />
           </Main>
         </Inner>
+
+        {isChatOpen && <ChatPanel onClose={() => setIsChatOpen(false)} />}
       </Frame>
 
       {/* Frame이 overflow:hidden이라 카드 안에 있으면 절대 카드 밖으로 못 나가서,
-          Frame의 형제로 뺐다. Frame 왼쪽 바깥 가장자리에 걸치도록 배치. */}
-      <RobotDock>
-        <RobotPop $active={aiActive}>
+          Frame의 형제로 뺐다. 평소엔 Frame 왼쪽 가장자리, 채팅 패널이 열리면
+          오른쪽 가장자리(좌우 반전)에 걸치도록 배치. */}
+      <RobotDock $chatOpen={isChatOpen} $active={aiActive}>
+        <RobotPop $active={aiActive} onClick={() => setIsChatOpen((v) => !v)}>
           <LLMModel size={106} state={aiPhase} />
         </RobotPop>
       </RobotDock>
