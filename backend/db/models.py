@@ -72,37 +72,6 @@ class NoteLink(Base):
     mentioned_concept: Mapped["Concept"] = relationship()
 
 
-class CodeProblem(Base):
-    __tablename__ = "code_problems"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    title: Mapped[str] = mapped_column(String, nullable=False)
-    prompt: Mapped[str] = mapped_column(Text, nullable=False)
-    constraints: Mapped[str] = mapped_column(Text, nullable=False)
-    examples: Mapped[list[dict]] = mapped_column(JSON, nullable=False)
-    difficulty: Mapped[str] = mapped_column(String, nullable=False, default="lv1")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
-
-    submissions: Mapped[list["CodeSubmission"]] = relationship(
-        back_populates="problem", cascade="all, delete-orphan"
-    )
-
-
-class CodeSubmission(Base):
-    __tablename__ = "code_submissions"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    problem_id: Mapped[int] = mapped_column(ForeignKey("code_problems.id"), nullable=False)
-    language: Mapped[str] = mapped_column(String, nullable=False)
-    code: Mapped[str] = mapped_column(Text, nullable=False)
-    passed: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    score: Mapped[int] = mapped_column(Integer, nullable=False)
-    feedback: Mapped[dict] = mapped_column(JSON, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
-
-    problem: Mapped["CodeProblem"] = relationship(back_populates="submissions")
-
-
 class ChatSession(Base):
     """채팅 패널을 한 번 열어 나눈 대화 묶음. title은 첫 사용자 메시지에서 따온다."""
 

@@ -65,14 +65,6 @@ export default function AppShell() {
             </NavGroup>
 
             <NavGroup>
-              <NavGroupLabel>코드 학습</NavGroupLabel>
-              <NavItem to="/code/read">코드 읽기</NavItem>
-              <NavItem to="/code/solve">문제 풀기</NavItem>
-              <NavItem to="/code/progress">학습 현황</NavItem>
-              <NavItem to="/code/submissions">제출 기록</NavItem>
-            </NavGroup>
-
-            <NavGroup>
               <NavGroupLabel>AI 채팅</NavGroupLabel>
               <NavItem to="/chats">채팅 내역</NavItem>
             </NavGroup>

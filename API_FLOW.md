@@ -150,50 +150,6 @@ flowchart LR
 
 ---
 
-## Code 라우터 (`app/routers/code.py`)
-
-코드 문제는 `concepts`와 달리 사용자가 등록하는 게 아니라 `db/seed.py`가 기동 시
-채워두는 콘텐츠. 채점도 실제로 코드를 실행하는 게 아니라 **LLM이 코드를 읽고
-판단**하는 방식 — `tools/quiz.py`의 서술형 채점(`grade_free_answer`)과 같은 패턴이다.
-
-### `GET /code/problems` — 문제 목록
-
-```mermaid
-flowchart LR
-  Req(["요청"]) --> D1["목록 조회<br/>SELECT code_problems"]:::db --> Res(["응답"])
-  classDef db fill:#dcf0ec,stroke:#1f8a76,color:#0f5c4e;
-```
-
-### `GET /code/problems/{id}` — 문제 상세
-
-```mermaid
-flowchart LR
-  Req(["요청"]) --> D1["문제 조회<br/>SELECT code_problems"]:::db --> Res(["응답"])
-  classDef db fill:#dcf0ec,stroke:#1f8a76,color:#0f5c4e;
-```
-
-### `POST /code/problems/{id}/submit` — 코드 제출 + 리뷰
-
-정확성·복잡도·보완점을 한 번에 LLM이 판단한다. "테스트케이스 통과"가 아니라
-LLM이 코드를 읽고 내린 판단이라는 점을 프롬프트에 명시해 과신을 막는다.
-
-```mermaid
-flowchart LR
-  Req(["요청"]) --> D1["문제 조회<br/>SELECT code_problems"]:::db --> L1["코드 리뷰<br/>complete_json()"]:::llm --> D2["제출 기록<br/>INSERT code_submission"]:::db --> Res(["응답"])
-  classDef db fill:#dcf0ec,stroke:#1f8a76,color:#0f5c4e;
-  classDef llm fill:#fbeed9,stroke:#c8842c,color:#8a5613;
-```
-
-### `GET /code/submissions` — 제출 이력
-
-```mermaid
-flowchart LR
-  Req(["요청"]) --> D1["이력 조회<br/>JOIN code_submissions"]:::db --> Res(["응답"])
-  classDef db fill:#dcf0ec,stroke:#1f8a76,color:#0f5c4e;
-```
-
----
-
 ## Chat / Agent (`app/routers/chat.py`, `agent/loop.py`)
 
 ### `POST /chat` — tool-calling 에이전트 루프
@@ -265,6 +221,6 @@ DB·LLM 없이 상태만 반환.
 
 | 구분 | 엔드포인트 |
 |---|---|
-| 매 요청 LLM 호출 (5) | `/concepts/interpret`, `/concepts/{id}/explain`, `/concepts/{id}/notes`(POST), `/code/problems/{id}/submit`, `/chat` |
+| 매 요청 LLM 호출 (4) | `/concepts/interpret`, `/concepts/{id}/explain`, `/concepts/{id}/notes`(POST), `/chat` |
 | 조건부 LLM (2) | `/concepts/{id}/quiz`(mc만), `/concepts/{id}/quiz/answer`(free만) |
-| LLM 없이 DB·로직만 (13) | `/concepts`(POST/GET), `/concepts/{id}/master`, `/notes`, `/notes/{id}`(DELETE), `/concepts/{id}/notes`(GET), `/code/problems`, `/code/problems/{id}`, `/code/submissions`, `/chat/sessions`, `/chat/sessions/{id}`(GET/DELETE), `/health` |
+| LLM 없이 DB·로직만 (10) | `/concepts`(POST/GET), `/concepts/{id}/master`, `/notes`, `/notes/{id}`(DELETE), `/concepts/{id}/notes`(GET), `/chat/sessions`, `/chat/sessions/{id}`(GET/DELETE), `/health` |
