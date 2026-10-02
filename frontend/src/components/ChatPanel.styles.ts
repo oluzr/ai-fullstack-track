@@ -30,7 +30,15 @@ export const Title = styled.div`
   letter-spacing: -0.01em;
 `;
 
+export const HeaderActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
 export const CloseButton = styled.button`
+  display: inline-flex;
+  align-items: center;
   border: none;
   background: none;
   font-size: 18px;
@@ -39,8 +47,13 @@ export const CloseButton = styled.button`
   cursor: pointer;
   transition: color 0.15s;
 
-  &:hover {
+  &:hover:not(:disabled) {
     color: ${(p) => p.theme.color.ink};
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
   }
 `;
 

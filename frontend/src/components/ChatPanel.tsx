@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { FiSend } from 'react-icons/fi'
-import { streamChat } from '../api'
+import { FiEdit, FiSend } from 'react-icons/fi'
+import { api, streamChat } from '../api'
 import { flashAiPhase, useAiActivityStore } from '../store/useAiActivityStore'
+import { useChatStore } from '../store/useChatStore'
 import { ErrorText, Muted } from '../styles/shared'
 import type { ChatActivityStep, ChatMessage, ChatStreamEvent } from '../types'
 import ChatMessageBubble, { AVATAR_SRC } from './ChatMessageBubble'
@@ -15,6 +16,7 @@ import {
   EmptyAvatar,
   EmptyState,
   Header,
+  HeaderActions,
   InputBar,
   MessageList,
   Panel,
@@ -40,22 +42,78 @@ function stepLabel(step: ChatActivityStep) {
   return `${step.toolName} 도구 ${verb}`
 }
 
-export default function ChatPanel({ onClose }: { onClose: () => void }) {
+function isSessionGone(err: unknown) {
+  return err instanceof Error && err.message.includes('chat session not found')
+}
+
+export default function ChatPanel() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [steps, setSteps] = useState<ChatActivityStep[]>([])
   const [input, setInput] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
-  // 패널을 연 동안 주고받은 메시지는 서버에서 한 대화로 묶인다. 첫 응답의 session
-  // 이벤트로 받은 id를 들고 있다가 이후 메시지에 실어 보낸다.
-  const sessionIdRef = useRef<number | null>(null)
+  // 주고받은 메시지는 서버에서 한 대화로 묶인다. 첫 응답의 session 이벤트로 받은 id를
+  // 스토어에 두고 이후 메시지에 실어 보낸다 — 패널을 닫았다 열어도 같은 대화가 이어진다.
+  const sessionId = useChatStore((s) => s.sessionId)
+  const setSessionId = useChatStore((s) => s.setSessionId)
+  const close = useChatStore((s) => s.close)
+  // 지금 화면에 메시지가 올라와 있는 대화의 id. 이 패널에서 방금 시작한 대화는
+  // 이미 화면에 있으니 서버에서 다시 불러오지 않는다.
+  const shownSessionRef = useRef<number | null>(null)
   const queryClient = useQueryClient()
 
   // 패널이 닫히면(언마운트) 진행 중이던 스트림 읽기를 끊는다 — 백그라운드에서
   // 계속 읽어봤자 반영할 화면이 없다.
   useEffect(() => () => abortRef.current?.abort(), [])
+
+  // 패널을 다시 열었거나 채팅 내역에서 "이어서 대화하기"를 누른 경우, 저장된 대화를 불러온다.
+  useEffect(() => {
+    if (sessionId === null || sessionId === shownSessionRef.current) return
+    shownSessionRef.current = sessionId
+    let cancelled = false
+    setIsLoadingHistory(true)
+    setSteps([])
+    setError(null)
+    queryClient
+      .fetchQuery({
+        queryKey: ['chat-session', sessionId],
+        queryFn: () => api.getChatSession(sessionId),
+      })
+      .then((session) => {
+        if (cancelled) return
+        setMessages(
+          session.messages.map((m) => ({
+            id: String(m.id),
+            role: m.role,
+            text: m.text,
+            createdAt: Date.parse(m.created_at),
+          })),
+        )
+      })
+      .catch((err) => {
+        if (cancelled) return
+        // 그 사이 채팅 내역에서 지워진 대화면 조용히 새 대화로 시작한다.
+        if (isSessionGone(err)) {
+          shownSessionRef.current = null
+          setIsLoadingHistory(false)
+          setSessionId(null)
+          setMessages([])
+          return
+        }
+        setError('이전 대화를 불러오지 못했습니다.')
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingHistory(false)
+      })
+    return () => {
+      // StrictMode의 effect 이중 실행에서 두 번째 실행이 다시 불러오도록 되돌린다.
+      cancelled = true
+      shownSessionRef.current = null
+    }
+  }, [sessionId, queryClient, setSessionId])
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
@@ -63,7 +121,8 @@ export default function ChatPanel({ onClose }: { onClose: () => void }) {
 
   function handleEvent(event: ChatStreamEvent) {
     if (event.type === 'session') {
-      sessionIdRef.current = event.session_id
+      shownSessionRef.current = event.session_id
+      setSessionId(event.session_id)
       return
     }
 
@@ -111,7 +170,7 @@ export default function ChatPanel({ onClose }: { onClose: () => void }) {
 
   async function handleSend() {
     const text = input.trim()
-    if (!text || isSending) return
+    if (!text || isSending || isLoadingHistory) return
 
     setMessages((prev) => [
       ...prev,
@@ -127,16 +186,13 @@ export default function ChatPanel({ onClose }: { onClose: () => void }) {
 
     try {
       try {
-        await streamChat(text, sessionIdRef.current, handleEvent, controller.signal)
+        await streamChat(text, sessionId, handleEvent, controller.signal)
       } catch (err) {
-        // 패널을 연 채로 채팅 내역 페이지에서 지금 대화를 지우면 서버가 404를 준다.
+        // 채팅 내역 페이지에서 지금 대화를 지우면 서버가 404를 준다.
         // 그땐 이어 붙일 대화가 없으니 새 대화로 다시 보낸다.
-        const sessionGone =
-          sessionIdRef.current !== null &&
-          err instanceof Error &&
-          err.message.includes('chat session not found')
-        if (!sessionGone) throw err
-        sessionIdRef.current = null
+        if (sessionId === null || !isSessionGone(err)) throw err
+        shownSessionRef.current = null
+        setSessionId(null)
         await streamChat(text, null, handleEvent, controller.signal)
       }
     } catch (err) {
@@ -150,10 +206,20 @@ export default function ChatPanel({ onClose }: { onClose: () => void }) {
       if (!controller.signal.aborted) setIsSending(false)
       abortRef.current = null
       queryClient.invalidateQueries({ queryKey: ['chat-sessions'] })
-      if (sessionIdRef.current !== null) {
-        queryClient.invalidateQueries({ queryKey: ['chat-session', sessionIdRef.current] })
+      const currentSessionId = useChatStore.getState().sessionId
+      if (currentSessionId !== null) {
+        queryClient.invalidateQueries({ queryKey: ['chat-session', currentSessionId] })
       }
     }
+  }
+
+  function handleNewChat() {
+    shownSessionRef.current = null
+    setSessionId(null)
+    setMessages([])
+    setSteps([])
+    setError(null)
+    setIsLoadingHistory(false)
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
@@ -163,18 +229,31 @@ export default function ChatPanel({ onClose }: { onClose: () => void }) {
     }
   }
 
-  const showEmptyState = messages.length === 0 && steps.length === 0 && !error
+  const showEmptyState =
+    !isLoadingHistory && messages.length === 0 && steps.length === 0 && !error
 
   return (
     <Panel>
       <Header>
         <Title>AI 채팅</Title>
-        <CloseButton onClick={onClose} aria-label="채팅 닫기">
-          ×
-        </CloseButton>
+        <HeaderActions>
+          <CloseButton
+            onClick={handleNewChat}
+            disabled={isSending || (sessionId === null && messages.length === 0)}
+            aria-label="새 대화"
+            title="새 대화"
+          >
+            <FiEdit size={15} />
+          </CloseButton>
+          <CloseButton onClick={close} aria-label="채팅 닫기">
+            ×
+          </CloseButton>
+        </HeaderActions>
       </Header>
 
       <MessageList ref={listRef}>
+        {isLoadingHistory && <Muted>이전 대화를 불러오는 중…</Muted>}
+
         {showEmptyState && (
           <EmptyState>
             <EmptyAvatar src={AVATAR_SRC} alt="" />
@@ -211,9 +290,9 @@ export default function ChatPanel({ onClose }: { onClose: () => void }) {
           onKeyDown={handleKeyDown}
           placeholder="메시지를 입력하세요"
           rows={1}
-          disabled={isSending}
+          disabled={isSending || isLoadingHistory}
         />
-        <SendButton onClick={handleSend} disabled={!input.trim() || isSending} aria-label="전송">
+        <SendButton onClick={handleSend} disabled={!input.trim() || isSending || isLoadingHistory} aria-label="전송">
           <FiSend size={16} />
         </SendButton>
       </InputBar>
