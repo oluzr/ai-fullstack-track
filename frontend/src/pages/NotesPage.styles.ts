@@ -1,4 +1,5 @@
 import styled from 'styled-components'
+import { DeleteIconButton } from '../components/ConfirmDialog'
 import { cardHoverLift, GlassCard } from '../styles/shared'
 
 export const Page = styled.div`
@@ -39,15 +40,15 @@ export const List = styled.div`
   max-width: 720px;
 `
 
-export const NoteCard = styled(GlassCard)`
+export const NoteCard = styled(GlassCard)<{ $editing?: boolean }>`
   padding: 18px 20px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  cursor: pointer;
+  cursor: ${(p) => (p.$editing ? 'default' : 'pointer')};
   transition: background 0.15s, box-shadow 0.15s;
 
-  ${cardHoverLift}
+  ${(p) => !p.$editing && cardHoverLift}
 `
 
 export const NoteMeta = styled.div`
@@ -82,4 +83,19 @@ export const NoteMetaRight = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
+`
+
+// 삭제 버튼과 같은 모양이되, 위험한 동작이 아니니 hover 색은 강조색으로.
+export const EditIconButton = styled(DeleteIconButton)`
+  &:hover {
+    color: ${(p) => p.theme.color.acc};
+    background: rgba(16, 185, 138, 0.14);
+  }
+`
+
+export const EditActions = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
 `

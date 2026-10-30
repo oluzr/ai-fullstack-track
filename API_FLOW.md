@@ -138,6 +138,22 @@ flowchart LR
   classDef db fill:#dcf0ec,stroke:#1f8a76,color:#0f5c4e;
 ```
 
+### `PATCH /notes/{id}` — 메모 수정 (조건부 LLM)
+
+본문이 바뀌면 언급 개념도 달라질 수 있으니 기존 역링크를 지우고 다시 추출한다.
+본문이 그대로면 LLM 없이 그대로 돌려준다. 빈 본문이면 422, 없는 id면 404.
+
+```mermaid
+flowchart LR
+  Req(["요청"]) --> D1["메모 조회<br/>SELECT note"]:::db
+  D1 --> D2["본문 갱신 + 역링크 삭제<br/>UPDATE note, DELETE note_links"]:::db --> L1["언급 재추출<br/>complete_json()"]:::llm --> D3["역링크 기록<br/>INSERT note_link"]:::dbcond --> Res(["응답"])
+  D1 --> Same["본문 동일<br/>LLM 없음"]:::muted --> Res
+  classDef db fill:#dcf0ec,stroke:#1f8a76,color:#0f5c4e;
+  classDef llm fill:#fbeed9,stroke:#c8842c,color:#8a5613;
+  classDef dbcond fill:#dcf0ec,stroke:#1f8a76,color:#0f5c4e,stroke-dasharray:4 3;
+  classDef muted fill:#f2f4f7,stroke:#c4cbd3,color:#5b6270;
+```
+
 ### `DELETE /notes/{id}` — 메모 삭제
 
 메모가 만든 백링크(`note_links`)도 함께 지운다. 없는 id면 404.
@@ -222,5 +238,5 @@ DB·LLM 없이 상태만 반환.
 | 구분 | 엔드포인트 |
 |---|---|
 | 매 요청 LLM 호출 (4) | `/concepts/interpret`, `/concepts/{id}/explain`, `/concepts/{id}/notes`(POST), `/chat` |
-| 조건부 LLM (2) | `/concepts/{id}/quiz`(mc만), `/concepts/{id}/quiz/answer`(free만) |
+| 조건부 LLM (3) | `/concepts/{id}/quiz`(mc만), `/concepts/{id}/quiz/answer`(free만), `/notes/{id}`(PATCH, 본문이 바뀔 때만) |
 | LLM 없이 DB·로직만 (10) | `/concepts`(POST/GET), `/concepts/{id}/master`, `/notes`, `/notes/{id}`(DELETE), `/concepts/{id}/notes`(GET), `/chat/sessions`, `/chat/sessions/{id}`(GET/DELETE), `/health` |
