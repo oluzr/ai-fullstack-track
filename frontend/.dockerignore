@@ -1,0 +1,4 @@
+# 이미지 안에서 npm install로 새로 설치한다. 로컬(macOS) node_modules가
+# COPY . . 로 들어가면 리눅스용 바이너리를 덮어쓰고, 전송도 수 분씩 걸린다.
+node_modules/
+dist/
