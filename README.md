@@ -37,7 +37,7 @@ backend/
 │   ├── schemas.py        # 요청/응답 Pydantic 모델
 │   └── routers/
 │       ├── concepts.py   # 등록/의미해석/목록/퀴즈/마스터
-│       ├── notes.py      # 메모 작성/조회
+│       ├── notes.py      # 메모 작성/조회/수정/삭제
 │       └── chat.py       # /chat 스트리밍 + 채팅 내역 저장/조회
 ├── agent/
 │   ├── loop.py           # 에이전트 루프 (tool_calls 반복 호출) — /chat
@@ -119,6 +119,7 @@ graph LR
 | POST | `/concepts/{id}/master` | 마스터 처리 (소프트 삭제) | X |
 | POST | `/concepts/{id}/notes` | 메모 작성 → 언급 개념 자동 추출 | O |
 | GET | `/concepts/{id}/notes` | 메모 조회 (내 메모 + 백링크 메모) | X |
+| PATCH | `/notes/{id}` | 메모 수정 → 본문이 바뀌면 언급 개념 재추출 | 본문 변경 시만 O |
 
 각 엔드포인트가 실제로 어떤 순서로 LLM/DB를 타는지는 [API_FLOW.md](./API_FLOW.md) 참고.
 

@@ -61,6 +61,10 @@ class NoteCreate(BaseModel):
     body: str
 
 
+class NoteUpdate(BaseModel):
+    body: str
+
+
 class NoteOut(BaseModel):
     id: int
     concept_id: int

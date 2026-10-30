@@ -74,6 +74,12 @@ export const api = {
       body: JSON.stringify({ body }),
     }),
 
+  updateNote: (noteId: number, body: string) =>
+    request<Note>(`/notes/${noteId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ body }),
+    }),
+
   deleteNote: (noteId: number) => request<void>(`/notes/${noteId}`, { method: 'DELETE' }),
 
   listChatSessions: () => request<ChatSessionSummary[]>('/chat/sessions'),

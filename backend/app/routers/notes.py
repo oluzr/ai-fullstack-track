@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
-from app.schemas import NoteCreate, NoteOut
+from app.schemas import NoteCreate, NoteOut, NoteUpdate
 from db.base import get_db
 from db.models import Concept, Note, NoteLink
 from tools.notes import extract_mentions
@@ -92,6 +92,36 @@ def list_notes(concept_id: int, db: Session = Depends(get_db)):
     ]
 
     return own_out + backlink_out
+
+
+@router.patch("/notes/{note_id}", response_model=NoteOut)
+def update_note(note_id: int, payload: NoteUpdate, db: Session = Depends(get_db)):
+    """본문을 고치면 언급 개념도 달라질 수 있으니 기존 백링크를 지우고 다시 추출한다.
+
+    본문이 그대로면 LLM을 부를 이유가 없으니 추출을 건너뛴다.
+    """
+    note = db.get(Note, note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="note not found")
+    body = payload.body.strip()
+    if not body:
+        raise HTTPException(status_code=422, detail="note body is empty")
+
+    if body != note.body:
+        note.body = body
+        note.links.clear()  # delete-orphan cascade라 note_links 행이 지워진다
+        db.commit()
+        db.refresh(note)
+        extract_mentions(db, note)
+
+    return NoteOut(
+        id=note.id,
+        concept_id=note.concept_id,
+        concept_term=note.concept.term,
+        body=note.body,
+        created_at=note.created_at,
+        is_backlink=False,
+    )
 
 
 @router.delete("/notes/{note_id}", status_code=204)
